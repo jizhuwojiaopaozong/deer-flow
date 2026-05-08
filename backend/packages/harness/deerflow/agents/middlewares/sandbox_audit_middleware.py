@@ -1,5 +1,7 @@
 """SandboxAuditMiddleware - bash command security auditing."""
 
+# 沙盒审计中间件: 审计 bash 命令安全性, 检测高风险操作并记录日志
+
 import json
 import logging
 import re
@@ -194,6 +196,7 @@ def _classify_command(command: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+# 沙盒审计中间件: 分类 bash 命令风险等级, 高风险命令记录审计日志或阻止执行
 class SandboxAuditMiddleware(AgentMiddleware[ThreadState]):
     """Bash command security auditing middleware.
 

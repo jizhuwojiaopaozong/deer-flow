@@ -1,3 +1,5 @@
+# 中文说明：vLLM模型提供者，在ChatOpenAI基础上保留reasoning字段以支持推理模型的多轮对话
+
 """Custom vLLM provider built on top of LangChain ChatOpenAI.
 
 vLLM 0.19.0 exposes reasoning models through an OpenAI-compatible API, but
@@ -36,6 +38,7 @@ from langchain_openai import ChatOpenAI
 from langchain_openai.chat_models.base import _create_usage_metadata
 
 
+# 中文说明：将DeerFlow的legacy thinking开关映射为vLLM/Qwen的enable_thinking参数
 def _normalize_vllm_chat_template_kwargs(payload: dict[str, Any]) -> None:
     """Map DeerFlow's legacy ``thinking`` toggle to vLLM/Qwen's ``enable_thinking``.
 
@@ -91,6 +94,7 @@ def _reasoning_to_text(reasoning: Any) -> str:
         return str(reasoning)
 
 
+# 中文说明：将流式delta转换为LangChain消息块，同时保留reasoning字段
 def _convert_delta_to_message_chunk_with_reasoning(_dict: Mapping[str, Any], default_class: type[BaseMessageChunk]) -> BaseMessageChunk:
     """Convert a streaming delta to a LangChain message chunk while preserving reasoning."""
     id_ = _dict.get("id")
@@ -147,6 +151,7 @@ def _convert_delta_to_message_chunk_with_reasoning(_dict: Mapping[str, Any], def
     return default_class(content=content, id=id_)  # type: ignore[call-arg]
 
 
+# 中文说明：将vLLM的reasoning字段重新注入到请求的助手消息中
 def _restore_reasoning_field(payload_msg: dict[str, Any], orig_msg: AIMessage) -> None:
     """Re-inject vLLM reasoning onto outgoing assistant messages."""
     reasoning = orig_msg.additional_kwargs.get("reasoning")
@@ -156,6 +161,7 @@ def _restore_reasoning_field(payload_msg: dict[str, Any], orig_msg: AIMessage) -
         payload_msg["reasoning"] = reasoning
 
 
+# 中文说明：ChatOpenAI变体，在请求/响应/流式中保留vLLM推理字段以支持交错思考
 class VllmChatModel(ChatOpenAI):
     """ChatOpenAI variant that preserves vLLM reasoning fields across turns."""
 

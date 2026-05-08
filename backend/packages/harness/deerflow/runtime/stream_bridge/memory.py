@@ -1,3 +1,4 @@
+# 中文说明：基于进程内事件日志的内存流桥接实现
 """In-memory stream bridge backed by an in-process event log."""
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ class _RunStream:
     start_offset: int = 0
 
 
+# 中文说明：内存流桥接实现，支持事件缓冲和断线重连回放
 class MemoryStreamBridge(StreamBridge):
     """Per-run in-memory event log implementation.
 

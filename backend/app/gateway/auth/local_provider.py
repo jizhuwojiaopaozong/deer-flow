@@ -1,3 +1,4 @@
+# 中文说明：本地邮箱/密码认证提供者，基于数据库的用户认证实现
 """Local email/password authentication provider."""
 
 import logging
@@ -10,6 +11,7 @@ from app.gateway.auth.repositories.base import UserRepository
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：本地邮箱/密码认证提供者，使用本地数据库存储用户
 class LocalAuthProvider(AuthProvider):
     """Email/password authentication provider using local database."""
 
@@ -21,6 +23,7 @@ class LocalAuthProvider(AuthProvider):
         """
         self._repo = repository
 
+    # 中文说明：使用邮箱和密码进行认证，成功返回 User，失败返回 None
     async def authenticate(self, credentials: dict) -> User | None:
         """Authenticate with email and password.
 
@@ -62,6 +65,7 @@ class LocalAuthProvider(AuthProvider):
         """Get user by ID."""
         return await self._repo.get_user_by_id(user_id)
 
+    # 中文说明：创建新的本地用户，密码会自动哈希处理
     async def create_user(self, email: str, password: str | None = None, system_role: str = "user", needs_setup: bool = False) -> User:
         """Create a new local user.
 

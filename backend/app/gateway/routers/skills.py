@@ -1,3 +1,4 @@
+# 中文说明：技能管理路由，提供技能列表查询、启用/禁用、安装、自定义编辑、回滚等功能
 import json
 import logging
 from pathlib import Path
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["skills"])
 
 
+# 中文说明：技能信息响应模型
 class SkillResponse(BaseModel):
     """Response model for skill information."""
 
@@ -31,6 +33,7 @@ class SkillResponse(BaseModel):
     enabled: bool = Field(default=True, description="Whether this skill is enabled")
 
 
+# 中文说明：技能列表响应模型
 class SkillsListResponse(BaseModel):
     """Response model for listing all skills."""
 
@@ -74,6 +77,7 @@ class SkillRollbackRequest(BaseModel):
     history_index: int = Field(default=-1, description="History entry index to restore from, defaulting to the latest change.")
 
 
+# 中文说明：将 Skill 对象转换为 SkillResponse
 def _skill_to_response(skill: Skill) -> SkillResponse:
     """Convert a Skill object to a SkillResponse."""
     return SkillResponse(
@@ -91,6 +95,7 @@ def _skill_to_response(skill: Skill) -> SkillResponse:
     summary="List All Skills",
     description="Retrieve a list of all available skills from both public and custom directories.",
 )
+# 中文说明：列出所有可用技能（公开和自定义）
 async def list_skills(config: AppConfig = Depends(get_config)) -> SkillsListResponse:
     try:
         skills = get_or_new_skill_storage(app_config=config).load_skills(enabled_only=False)
@@ -106,6 +111,7 @@ async def list_skills(config: AppConfig = Depends(get_config)) -> SkillsListResp
     summary="Install Skill",
     description="Install a skill from a .skill file (ZIP archive) located in the thread's user-data directory.",
 )
+# 中文说明：从 .skill 文件（ZIP 归档）安装技能
 async def install_skill(request: SkillInstallRequest, config: AppConfig = Depends(get_config)) -> SkillInstallResponse:
     try:
         skill_file_path = resolve_thread_virtual_path(request.thread_id, request.path)

@@ -1,3 +1,5 @@
+# Lead Agent 系统提示词模块: 管理技能缓存、构建系统提示模板、注入记忆和子代理指令
+
 from __future__ import annotations
 
 import asyncio
@@ -26,10 +28,12 @@ _enabled_skills_refresh_version = 0
 _enabled_skills_refresh_event = threading.Event()
 
 
+# 同步加载已启用的技能列表
 def _load_enabled_skills_sync() -> list[Skill]:
     return list(get_or_new_skill_storage().load_skills(enabled_only=True))
 
 
+# 启动后台线程刷新技能缓存
 def _start_enabled_skills_refresh_thread() -> None:
     threading.Thread(
         target=_refresh_enabled_skills_cache_worker,
@@ -38,6 +42,7 @@ def _start_enabled_skills_refresh_thread() -> None:
     ).start()
 
 
+# 技能缓存刷新工作线程: 循环加载直到版本号稳定
 def _refresh_enabled_skills_cache_worker() -> None:
     global _enabled_skills_cache, _enabled_skills_refresh_active
 
@@ -63,6 +68,7 @@ def _refresh_enabled_skills_cache_worker() -> None:
             _enabled_skills_cache = None
 
 
+# 确保技能缓存已初始化: 未初始化时启动后台加载线程
 def _ensure_enabled_skills_cache() -> threading.Event:
     global _enabled_skills_refresh_active
 
@@ -79,6 +85,7 @@ def _ensure_enabled_skills_cache() -> threading.Event:
     return _enabled_skills_refresh_event
 
 
+# 使技能缓存失效: 清除缓存并触发后台刷新
 def _invalidate_enabled_skills_cache() -> threading.Event:
     global _enabled_skills_cache, _enabled_skills_refresh_active, _enabled_skills_refresh_version
 
@@ -96,10 +103,12 @@ def _invalidate_enabled_skills_cache() -> threading.Event:
     return _enabled_skills_refresh_event
 
 
+# 预热技能缓存: 应用启动时调用, 不阻塞主线程
 def prime_enabled_skills_cache() -> None:
     _ensure_enabled_skills_cache()
 
 
+# 等待技能缓存预热完成: 超时后返回 False
 def warm_enabled_skills_cache(timeout_seconds: float = _ENABLED_SKILLS_REFRESH_WAIT_TIMEOUT_SECONDS) -> bool:
     if _ensure_enabled_skills_cache().wait(timeout=timeout_seconds):
         return True
@@ -112,6 +121,7 @@ def _get_enabled_skills():
     return get_cached_enabled_skills()
 
 
+# 获取缓存的技能列表: 缓存未命中时触发后台刷新, 请求路径安全 (不阻塞磁盘 I/O)
 def get_cached_enabled_skills() -> list[Skill]:
     """Return the cached enabled-skills list, kicking off a background refresh on miss.
 
@@ -128,6 +138,7 @@ def get_cached_enabled_skills() -> list[Skill]:
     return []
 
 
+# 按 AppConfig 获取技能列表: 缓存按 config 对象身份区分, 避免每次 agent 创建都重新扫描
 def get_enabled_skills_for_config(app_config: AppConfig | None = None) -> list[Skill]:
     """Return enabled skills using the caller's config source.
 
@@ -153,18 +164,22 @@ def get_enabled_skills_for_config(app_config: AppConfig | None = None) -> list[S
     return list(skills)
 
 
+# 返回技能可变性标签: 自定义技能显示 [custom, editable], 内置技能显示 [built-in]
 def _skill_mutability_label(category: SkillCategory | str) -> str:
     return "[custom, editable]" if category == SkillCategory.CUSTOM else "[built-in]"
 
 
+# 清除技能系统提示缓存 (同步)
 def clear_skills_system_prompt_cache() -> None:
     _invalidate_enabled_skills_cache()
 
 
+# 异步清除技能系统提示缓存
 async def refresh_skills_system_prompt_cache_async() -> None:
     await asyncio.to_thread(_invalidate_enabled_skills_cache().wait)
 
 
+# 构建技能自进化提示段: 任务完成后自动创建或更新技能
 def _build_skill_evolution_section(skill_evolution_enabled: bool) -> str:
     if not skill_evolution_enabled:
         return ""
@@ -181,6 +196,7 @@ Skip simple one-off tasks.
 """
 
 
+# 动态构建子代理类型描述: 从注册表获取所有可用子代理的说明
 def _build_available_subagents_description(available_names: list[str], bash_available: bool, *, app_config: AppConfig | None = None) -> str:
     """Dynamically build subagent type descriptions from registry.
 
@@ -211,6 +227,7 @@ def _build_available_subagents_description(available_names: list[str], bash_avai
     return "\n".join(lines)
 
 
+# 构建子代理系统提示段: 包含并发限制、编排策略和使用示例
 def _build_subagent_section(max_concurrent: int, *, app_config: AppConfig | None = None) -> str:
     """Build the subagent system prompt section with dynamic concurrency limit.
 
@@ -554,6 +571,7 @@ combined with a FastAPI gateway for REST API access [citation:FastAPI](https://f
 """
 
 
+# 获取记忆上下文: 从记忆系统加载用户记忆, 注入到系统提示的 <memory> 标签中
 def _get_memory_context(agent_name: str | None = None, *, app_config: AppConfig | None = None) -> str:
     """Get memory context for injection into system prompt.
 
@@ -595,6 +613,7 @@ def _get_memory_context(agent_name: str | None = None, *, app_config: AppConfig 
 
 
 @lru_cache(maxsize=32)
+# 带缓存的技能提示段生成: 按技能签名缓存, 避免重复构建
 def _get_cached_skills_prompt_section(
     skill_signature: tuple[tuple[str, str, str, str], ...],
     available_skills_key: tuple[str, ...] | None,
@@ -626,6 +645,7 @@ You have access to skills that provide optimized workflows for specific tasks. E
 </skill_system>"""
 
 
+# 生成技能提示段: 列出可用技能及其容器路径, 供代理按需加载
 def get_skills_prompt_section(available_skills: set[str] | None = None, *, app_config: AppConfig | None = None) -> str:
     """Generate the skills prompt section with available skills list."""
     skills = get_enabled_skills_for_config(app_config)
@@ -659,6 +679,7 @@ def get_skills_prompt_section(available_skills: set[str] | None = None, *, app_c
     return _get_cached_skills_prompt_section(skill_signature, available_key, container_base_path, skill_evolution_section)
 
 
+# 获取代理 SOUL: 加载自定义代理的人格描述文件 SOUL.md
 def get_agent_soul(agent_name: str | None) -> str:
     # Append SOUL.md (agent personality) if present
     soul = load_agent_soul(agent_name)
@@ -667,6 +688,7 @@ def get_agent_soul(agent_name: str | None) -> str:
     return ""
 
 
+# 构建自更新提示段: 教导自定义代理通过 update_agent 工具持久化配置变更
 def _build_self_update_section(agent_name: str | None) -> str:
     """Prompt block that teaches the custom agent to persist self-updates via update_agent."""
     if not agent_name:
@@ -687,6 +709,7 @@ Rules:
 """
 
 
+# 生成延迟工具提示段: 列出可通过 tool_search 按需加载的 MCP 工具名称
 def get_deferred_tools_prompt_section(*, app_config: AppConfig | None = None) -> str:
     """Generate <available-deferred-tools> block for the system prompt.
 
@@ -717,6 +740,7 @@ def get_deferred_tools_prompt_section(*, app_config: AppConfig | None = None) ->
     return f"<available-deferred-tools>\n{names}\n</available-deferred-tools>"
 
 
+# 构建 ACP 代理提示段: 仅在配置了 ACP 代理时生成, 说明 ACP 工作区路径和使用规则
 def _build_acp_section(*, app_config: AppConfig | None = None) -> str:
     """Build the ACP agent prompt section, only if ACP agents are configured."""
     if app_config is None:
@@ -741,6 +765,7 @@ def _build_acp_section(*, app_config: AppConfig | None = None) -> str:
     )
 
 
+# 构建自定义挂载目录提示段: 列出配置的沙盒挂载路径和访问权限
 def _build_custom_mounts_section(*, app_config: AppConfig | None = None) -> str:
     """Build a prompt section for explicitly configured sandbox mounts."""
     if app_config is None:
@@ -768,6 +793,7 @@ def _build_custom_mounts_section(*, app_config: AppConfig | None = None) -> str:
     return f"\n**Custom Mounted Directories:**\n{mounts_list}\n- If the user needs files outside `/mnt/user-data`, use these absolute container paths directly when they match the requested directory"
 
 
+# 组装最终系统提示: 注入记忆、技能、子代理、ACP 代理、自定义挂载等所有动态段
 def apply_prompt_template(
     subagent_enabled: bool = False,
     max_concurrent_subagents: int = 3,

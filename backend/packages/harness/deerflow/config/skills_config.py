@@ -1,3 +1,4 @@
+# 中文说明：技能系统配置，管理技能目录路径和容器内挂载路径
 import os
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 from deerflow.config.runtime_paths import project_root, resolve_path
 
 
+# 中文说明：返回源码树中的技能目录位置，用于单仓库兼容
 def _legacy_skills_candidates() -> tuple[Path, ...]:
     """Return source-tree skills locations for monorepo compatibility."""
     backend_dir = Path(__file__).resolve().parents[4]
@@ -13,6 +15,7 @@ def _legacy_skills_candidates() -> tuple[Path, ...]:
     return (repo_root / "skills",)
 
 
+# 中文说明：技能配置类，支持多种路径解析策略
 class SkillsConfig(BaseModel):
     """Configuration for skills system"""
 

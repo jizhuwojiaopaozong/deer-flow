@@ -1,8 +1,10 @@
+# 中文说明：Gateway 配置模块，定义 API 网关的主机、端口、CORS 等配置项
 import os
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：API 网关配置模型，包含主机地址、端口、CORS 来源、文档开关等字段
 class GatewayConfig(BaseModel):
     """Configuration for the API Gateway."""
 
@@ -15,6 +17,7 @@ class GatewayConfig(BaseModel):
 _gateway_config: GatewayConfig | None = None
 
 
+# 中文说明：获取全局网关配置单例，首次调用时从环境变量加载
 def get_gateway_config() -> GatewayConfig:
     """Get gateway config, loading from environment if available."""
     global _gateway_config

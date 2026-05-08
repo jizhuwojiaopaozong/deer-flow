@@ -1,3 +1,4 @@
+# 中文说明：钉钉渠道实现模块，支持 Stream Push 和 AI Card 流式更新
 """DingTalk channel implementation."""
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ _CONVERSATION_TYPE_GROUP = "2"
 _MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024
 
 
+# 中文说明：标准化会话类型，将各种格式统一为 "1"(私聊) 或 "2"(群聊)
 def _normalize_conversation_type(raw: Any) -> str:
     """Normalize ``conversationType`` to ``"1"`` (P2P) or ``"2"`` (group).
 
@@ -42,6 +44,7 @@ def _normalize_conversation_type(raw: Any) -> str:
     return _CONVERSATION_TYPE_P2P
 
 
+# 中文说明：标准化钉钉允许用户列表
 def _normalize_allowed_users(allowed_users: Any) -> set[str]:
     if allowed_users is None:
         return set()
@@ -58,6 +61,7 @@ def _normalize_allowed_users(allowed_users: Any) -> set[str]:
     return {str(uid) for uid in values if str(uid)}
 
 
+# 中文说明：判断文本是否为钉钉已知命令
 def _is_dingtalk_command(text: str) -> bool:
     if not text.startswith("/"):
         return False
@@ -101,6 +105,7 @@ def _convert_markdown_table(text: str) -> str:
     return "\n".join(result)
 
 
+# 中文说明：适配 Markdown 格式以兼容钉钉的 sampleMarkdown 渲染器
 def _adapt_markdown_for_dingtalk(text: str) -> str:
     """Adapt markdown for DingTalk's limited sampleMarkdown renderer."""
 
@@ -118,6 +123,7 @@ def _adapt_markdown_for_dingtalk(text: str) -> str:
     return text
 
 
+# 中文说明：钉钉 IM 渠道类，使用 Stream Push（WebSocket）连接，支持 AI Card 流式更新
 class DingTalkChannel(Channel):
     """DingTalk IM channel using Stream Push (WebSocket, no public IP needed)."""
 
@@ -143,6 +149,7 @@ class DingTalkChannel(Channel):
     def supports_streaming(self) -> bool:
         return bool(self._card_template_id)
 
+    # 中文说明：启动钉钉渠道，初始化 Stream 客户端
     async def start(self) -> None:
         if self._running:
             return
@@ -215,6 +222,7 @@ class DingTalkChannel(Channel):
             sender_staff_id = msg.chat_id or sender_staff_id
         return conversation_type, sender_staff_id, conversation_id
 
+    # 中文说明：发送消息到钉钉，支持 AI Card 流式更新和 sampleMarkdown 降级
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         conversation_type, sender_staff_id, conversation_id = self._resolve_routing(msg)
         robot_code = self._client_id
@@ -369,6 +377,7 @@ class DingTalkChannel(Channel):
         finally:
             self._stream_client = None
 
+    # 中文说明：处理钉钉机器人消息回调，解析消息并构建入站消息
     def _on_chatbot_message(self, message: Any) -> None:
         if not self._running:
             return
@@ -488,6 +497,7 @@ class DingTalkChannel(Channel):
 
     # -- DingTalk API helpers ----------------------------------------------
 
+    # 中文说明：获取钉钉访问令牌，带自动缓存和过期刷新
     async def _get_access_token(self) -> str:
         if self._cached_token and time.monotonic() < self._token_expires_at:
             return self._cached_token
@@ -710,6 +720,7 @@ class DingTalkChannel(Channel):
             pass
 
 
+# 中文说明：钉钉 Stream 消息回调处理器，注册到 dingtalk-stream SDK
 class _DingTalkMessageHandler:
     """Callback handler registered with dingtalk-stream."""
 

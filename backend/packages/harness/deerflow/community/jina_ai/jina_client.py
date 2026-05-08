@@ -1,3 +1,4 @@
+# 中文说明：Jina AI Reader API 客户端，用于抓取网页内容
 import logging
 import os
 
@@ -8,7 +9,9 @@ logger = logging.getLogger(__name__)
 _api_key_warned = False
 
 
+# 中文说明：Jina Reader HTTP 客户端，支持异步网页抓取
 class JinaClient:
+    # 中文说明：异步抓取指定 URL 的网页内容
     async def crawl(self, url: str, return_format: str = "html", timeout: int = 10) -> str:
         global _api_key_warned
         headers = {

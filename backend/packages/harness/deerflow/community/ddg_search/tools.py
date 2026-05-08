@@ -1,3 +1,4 @@
+# 中文说明：基于 DuckDuckGo 的网页搜索工具实现，无需 API 密钥
 """
 Web Search Tool - Search the web using DuckDuckGo (no API key required).
 """
@@ -12,6 +13,7 @@ from deerflow.config import get_app_config
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：执行 DuckDuckGo 文本搜索的内部函数
 def _search_text(
     query: str,
     max_results: int = 5,
@@ -52,6 +54,7 @@ def _search_text(
         return []
 
 
+# 中文说明：使用 DuckDuckGo 搜索网页信息
 @tool("web_search", parse_docstring=True)
 def web_search_tool(
     query: str,

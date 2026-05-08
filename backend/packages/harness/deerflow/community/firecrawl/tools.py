@@ -1,3 +1,4 @@
+# 中文说明：基于 Firecrawl API 的网页搜索和内容抓取工具实现
 import json
 
 from firecrawl import FirecrawlApp
@@ -6,6 +7,7 @@ from langchain.tools import tool
 from deerflow.config import get_app_config
 
 
+# 中文说明：根据配置创建 Firecrawl 客户端实例
 def _get_firecrawl_client(tool_name: str = "web_search") -> FirecrawlApp:
     config = get_app_config().get_tool_config(tool_name)
     api_key = None
@@ -14,6 +16,7 @@ def _get_firecrawl_client(tool_name: str = "web_search") -> FirecrawlApp:
     return FirecrawlApp(api_key=api_key)  # type: ignore[arg-type]
 
 
+# 中文说明：使用 Firecrawl 执行网页搜索并返回标准化结果
 @tool("web_search", parse_docstring=True)
 def web_search_tool(query: str) -> str:
     """Search the web.
@@ -46,6 +49,7 @@ def web_search_tool(query: str) -> str:
         return f"Error: {str(e)}"
 
 
+# 中文说明：使用 Firecrawl 抓取指定 URL 的网页内容并转为 Markdown
 @tool("web_fetch", parse_docstring=True)
 def web_fetch_tool(url: str) -> str:
     """Fetch the contents of a web page at a given URL.

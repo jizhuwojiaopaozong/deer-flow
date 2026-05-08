@@ -1,3 +1,4 @@
+# 中文说明：运行事件捕获器，通过 LangChain 回调机制记录运行事件和 token 用量
 """Run event capture via LangChain callbacks.
 
 RunJournal sits between LangChain's callback mechanism and the pluggable
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：运行日志记录器，捕获 LLM 调用、工具执行和链事件
 class RunJournal(BaseCallbackHandler):
     """LangChain callback handler that captures events to RunEventStore."""
 
@@ -355,6 +357,7 @@ class RunJournal(BaseCallbackHandler):
             content={"name": name, "hook": hook, "action": action, "changes": changes},
         )
 
+    # 中文说明：强制刷新缓冲区中的事件到存储
     async def flush(self) -> None:
         """Force flush remaining buffer. Called in worker's finally block."""
         if self._pending_flush_tasks:
@@ -369,6 +372,7 @@ class RunJournal(BaseCallbackHandler):
                 self._buffer = batch + self._buffer
                 raise
 
+    # 中文说明：返回累积的 token 和消息数据，用于运行完成时写入
     def get_completion_data(self) -> dict:
         """Return accumulated token and message data for run completion."""
         return {

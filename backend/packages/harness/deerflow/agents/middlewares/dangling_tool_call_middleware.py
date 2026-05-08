@@ -13,6 +13,8 @@ at the correct positions (immediately after each dangling AIMessage), not append
 to the end of the message list as before_model + add_messages reducer would do.
 """
 
+# 悬空工具调用中间件: 为缺少 ToolMessage 的 AIMessage tool_calls 注入占位符
+
 import json
 import logging
 from collections.abc import Awaitable, Callable
@@ -26,6 +28,7 @@ from langchain_core.messages import ToolMessage
 logger = logging.getLogger(__name__)
 
 
+# 悬空工具调用中间件: 检测并修补缺少 ToolMessage 的 AIMessage tool_calls
 class DanglingToolCallMiddleware(AgentMiddleware[AgentState]):
     """Inserts placeholder ToolMessages for dangling tool calls before model invocation.
 

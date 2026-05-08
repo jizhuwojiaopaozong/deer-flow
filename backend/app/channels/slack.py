@@ -1,3 +1,4 @@
+# 中文说明：Slack 渠道实现，通过 Socket Mode 连接（无需公网 IP）
 """Slack channel — connects via Socket Mode (no public IP needed)."""
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 _slack_md_converter = SlackMarkdownConverter()
 
 
+# 中文说明：标准化允许用户列表，支持字符串、列表等多种输入格式
 def _normalize_allowed_users(allowed_users: Any) -> set[str]:
     if allowed_users is None:
         return set()
@@ -32,6 +34,7 @@ def _normalize_allowed_users(allowed_users: Any) -> set[str]:
     return {str(user_id) for user_id in values if str(user_id)}
 
 
+# 中文说明：Slack IM 渠道类，使用 Socket Mode（WebSocket）连接，无需公网 IP
 class SlackChannel(Channel):
     """Slack IM channel using Socket Mode (WebSocket, no public IP).
 
@@ -50,6 +53,7 @@ class SlackChannel(Channel):
         self._loop: asyncio.AbstractEventLoop | None = None
         self._allowed_users = _normalize_allowed_users(config.get("allowed_users", []))
 
+    # 中文说明：启动 Slack 渠道，初始化 WebClient 和 SocketMode 客户端
     async def start(self) -> None:
         if self._running:
             return
@@ -87,6 +91,7 @@ class SlackChannel(Channel):
         asyncio.get_event_loop().run_in_executor(None, self._socket_client.connect)
         logger.info("Slack channel started")
 
+    # 中文说明：停止 Slack 渠道，断开 Socket 连接
     async def stop(self) -> None:
         self._running = False
         self.bus.unsubscribe_outbound(self._on_outbound)
@@ -95,6 +100,7 @@ class SlackChannel(Channel):
             self._socket_client = None
         logger.info("Slack channel stopped")
 
+    # 中文说明：发送消息到 Slack，支持重试机制
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         if not self._web_client:
             return
@@ -148,6 +154,7 @@ class SlackChannel(Channel):
             raise RuntimeError("Slack send failed without an exception from any attempt")
         raise last_exc
 
+    # 中文说明：上传文件附件到 Slack 频道
     async def send_file(self, msg: OutboundMessage, attachment: ResolvedAttachment) -> bool:
         if not self._web_client:
             return False
@@ -199,6 +206,7 @@ class SlackChannel(Channel):
         except Exception:
             logger.exception("[Slack] failed to send running reply in channel=%s", channel_id)
 
+    # 中文说明：Socket Mode 事件回调，处理来自 Slack 的实时事件
     def _on_socket_event(self, client, req) -> None:
         """Called by slack-sdk for each Socket Mode event."""
         try:
@@ -220,6 +228,7 @@ class SlackChannel(Channel):
         except Exception:
             logger.exception("Error processing Slack event")
 
+    # 中文说明：处理 Slack 消息事件，过滤机器人消息并构建入站消息
     def _handle_message_event(self, event: dict) -> None:
         # Ignore bot messages
         if event.get("bot_id") or event.get("subtype"):

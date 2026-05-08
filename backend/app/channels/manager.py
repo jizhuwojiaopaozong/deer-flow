@@ -1,3 +1,4 @@
+# 中文说明：渠道调度管理器模块，消费入站消息并通过 Gateway 将其分发给 DeerFlow 智能体
 """ChannelManager — consumes inbound messages and dispatches them to the DeerFlow agent via Gateway."""
 
 from __future__ import annotations
@@ -52,6 +53,7 @@ InboundFileReader = Callable[[dict[str, Any], httpx.AsyncClient], Awaitable[byte
 _METADATA_DROP_KEYS = frozenset({"raw_message", "ref_msg"})
 
 
+# 中文说明：移除元数据中的大体积已知键，返回精简副本
 def _slim_metadata(meta: dict[str, Any]) -> dict[str, Any]:
     """Return a shallow copy of *meta* with known-large keys removed."""
     return {k: v for k, v in meta.items() if k not in _METADATA_DROP_KEYS}
@@ -60,10 +62,12 @@ def _slim_metadata(meta: dict[str, Any]) -> dict[str, Any]:
 INBOUND_FILE_READERS: dict[str, InboundFileReader] = {}
 
 
+# 中文说明：注册渠道的入站文件读取器
 def register_inbound_file_reader(channel_name: str, reader: InboundFileReader) -> None:
     INBOUND_FILE_READERS[channel_name] = reader
 
 
+# 中文说明：通过 HTTP 下载入站文件
 async def _read_http_inbound_file(file_info: dict[str, Any], client: httpx.AsyncClient) -> bytes | None:
     url = file_info.get("url")
     if not isinstance(url, str) or not url:
@@ -74,6 +78,7 @@ async def _read_http_inbound_file(file_info: dict[str, Any], client: httpx.Async
     return resp.content
 
 
+# 中文说明：读取企业微信入站文件，支持 AES 解密
 async def _read_wecom_inbound_file(file_info: dict[str, Any], client: httpx.AsyncClient) -> bytes | None:
     data = await _read_http_inbound_file(file_info, client)
     if data is None:
@@ -92,6 +97,7 @@ async def _read_wecom_inbound_file(file_info: dict[str, Any], client: httpx.Asyn
     return decrypt_file(data, aeskey)
 
 
+# 中文说明：读取微信入站文件，支持本地路径和远程 URL
 async def _read_wechat_inbound_file(file_info: dict[str, Any], client: httpx.AsyncClient) -> bytes | None:
     raw_path = file_info.get("path")
     if isinstance(raw_path, str) and raw_path.strip():
@@ -112,10 +118,12 @@ register_inbound_file_reader("wecom", _read_wecom_inbound_file)
 register_inbound_file_reader("wechat", _read_wechat_inbound_file)
 
 
+# 中文说明：渠道会话配置无效时抛出的异常
 class InvalidChannelSessionConfigError(ValueError):
     """Raised when IM channel session overrides contain invalid agent config."""
 
 
+# 中文说明：判断异常是否为线程忙错误（并发运行冲突）
 def _is_thread_busy_error(exc: BaseException | None) -> bool:
     if exc is None:
         return False
@@ -153,6 +161,7 @@ def _strip_loop_warning_text(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if "[LOOP DETECTED]" not in line).strip()
 
 
+# 中文说明：从 LangGraph runs.wait 结果中提取最后一条 AI 消息文本
 def _extract_response_text(result: dict | list) -> str:
     """Extract the last AI message text from a LangGraph runs.wait result.
 
@@ -215,6 +224,7 @@ def _extract_response_text(result: dict | list) -> str:
     return ""
 
 
+# 中文说明：从流式载荷的 content 字段中提取文本
 def _extract_text_content(content: Any) -> str:
     """Extract text from a streaming payload content field."""
     if isinstance(content, str):
@@ -270,6 +280,7 @@ def _extract_stream_message_id(payload: Any, metadata: Any) -> str | None:
     return None
 
 
+# 中文说明：将流式 messages-tuple 事件转换为最新的可显示 AI 文本
 def _accumulate_stream_text(
     buffers: dict[str, str],
     current_message_id: str | None,
@@ -307,6 +318,7 @@ def _accumulate_stream_text(
     return buffers[message_id], message_id
 
 
+# 中文说明：从最后一个 AI 响应周期中提取产物路径（仅返回本轮新产生的产物）
 def _extract_artifacts(result: dict | list) -> list[str]:
     """Extract artifact paths from the last AI response cycle only.
 
@@ -353,6 +365,7 @@ def _format_artifact_text(artifacts: list[str]) -> str:
 _OUTPUTS_VIRTUAL_PREFIX = "/mnt/user-data/outputs/"
 
 
+# 中文说明：将虚拟产物路径解析为主机文件系统路径及元信息，仅允许 outputs 目录下的文件
 def _resolve_attachments(thread_id: str, artifacts: list[str]) -> list[ResolvedAttachment]:
     """Resolve virtual artifact paths to host filesystem paths with metadata.
 
@@ -403,6 +416,7 @@ def _resolve_attachments(thread_id: str, artifacts: list[str]) -> list[ResolvedA
     return attachments
 
 
+# 中文说明：准备产物交付，解析附件并在文本响应中追加文件名降级提示
 def _prepare_artifact_delivery(
     thread_id: str,
     response_text: str,
@@ -430,6 +444,7 @@ def _prepare_artifact_delivery(
     return response_text, attachments
 
 
+# 中文说明：将入站消息中的文件附件下载并保存到线程上传目录
 async def _ingest_inbound_files(thread_id: str, msg: InboundMessage) -> list[dict[str, Any]]:
     if not msg.files:
         return []
@@ -538,6 +553,7 @@ def _format_uploaded_files_block(files: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+# 中文说明：核心调度器类，桥接 IM 渠道与 DeerFlow 智能体，管理线程创建和消息路由
 class ChannelManager:
     """Core dispatcher that bridges IM channels to the DeerFlow agent.
 
@@ -572,6 +588,7 @@ class ChannelManager:
         self._running = False
         self._task: asyncio.Task | None = None
 
+    # 中文说明：判断指定渠道是否支持流式输出
     @staticmethod
     def _channel_supports_streaming(channel_name: str) -> bool:
         from .service import get_channel_service
@@ -633,6 +650,7 @@ class ChannelManager:
 
     # -- LangGraph SDK client (lazy) ----------------------------------------
 
+    # 中文说明：获取 langgraph_sdk 异步客户端，首次使用时创建
     def _get_client(self):
         """Return the ``langgraph_sdk`` async client, creating it on first use."""
         if self._client is None:
@@ -650,6 +668,7 @@ class ChannelManager:
 
     # -- lifecycle ---------------------------------------------------------
 
+    # 中文说明：启动调度循环
     async def start(self) -> None:
         """Start the dispatch loop."""
         if self._running:
@@ -659,6 +678,7 @@ class ChannelManager:
         self._task = asyncio.create_task(self._dispatch_loop())
         logger.info("ChannelManager started (max_concurrency=%d)", self._max_concurrency)
 
+    # 中文说明：停止调度循环
     async def stop(self) -> None:
         """Stop the dispatch loop."""
         self._running = False
@@ -673,6 +693,7 @@ class ChannelManager:
 
     # -- dispatch loop -----------------------------------------------------
 
+    # 中文说明：主调度循环，从消息总线消费入站消息并分发给处理任务
     async def _dispatch_loop(self) -> None:
         logger.info("[Manager] dispatch loop started, waiting for inbound messages")
         while self._running:
@@ -741,6 +762,7 @@ class ChannelManager:
         logger.info("[Manager] new thread created through Gateway: thread_id=%s for chat_id=%s topic_id=%s", thread_id, msg.chat_id, msg.topic_id)
         return thread_id
 
+    # 中文说明：处理聊天消息，查找/创建线程并调用智能体
     async def _handle_chat(self, msg: InboundMessage, extra_context: dict[str, Any] | None = None) -> None:
         client = self._get_client()
 
@@ -826,6 +848,7 @@ class ChannelManager:
         logger.info("[Manager] publishing outbound message to bus: channel=%s, chat_id=%s", msg.channel_name, msg.chat_id)
         await self.bus.publish_outbound(outbound)
 
+    # 中文说明：处理流式聊天，使用 runs.stream 实时推送中间结果
     async def _handle_streaming_chat(
         self,
         client,
@@ -934,6 +957,7 @@ class ChannelManager:
 
     # -- command handling --------------------------------------------------
 
+    # 中文说明：处理斜杠命令（/new、/status、/models、/memory、/help 等）
     async def _handle_command(self, msg: InboundMessage) -> None:
         text = msg.text.strip()
         parts = text.split(maxsplit=1)
@@ -1018,6 +1042,7 @@ class ChannelManager:
 
     # -- error helper ------------------------------------------------------
 
+    # 中文说明：发送错误消息到渠道
     async def _send_error(self, msg: InboundMessage, error_text: str) -> None:
         outbound = OutboundMessage(
             channel_name=msg.channel_name,

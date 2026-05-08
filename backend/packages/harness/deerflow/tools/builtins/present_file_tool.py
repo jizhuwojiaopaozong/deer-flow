@@ -1,19 +1,22 @@
+# 文件展示工具: 将代理生成的文件呈现给用户, 用于查看和下载
 from pathlib import Path
 from typing import Annotated
 
-from langchain.tools import InjectedToolCallId, tool
+from langchain.tools import InjectedToolCallId, ToolRuntime, tool
 from langchain_core.messages import ToolMessage
 from langgraph.config import get_config
 from langgraph.types import Command
+from langgraph.typing import ContextT
 
+from deerflow.agents.thread_state import ThreadState
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.tools.types import Runtime
 
 OUTPUTS_VIRTUAL_PREFIX = f"{VIRTUAL_PATH_PREFIX}/outputs"
 
 
-def _get_thread_id(runtime: Runtime) -> str | None:
+# 获取当前线程 ID: 从运行时上下文或配置中解析
+def _get_thread_id(runtime: ToolRuntime[ContextT, ThreadState]) -> str | None:
     """Resolve the current thread id from runtime context or RunnableConfig."""
     thread_id = runtime.context.get("thread_id") if runtime.context else None
     if thread_id:
@@ -30,8 +33,9 @@ def _get_thread_id(runtime: Runtime) -> str | None:
         return None
 
 
+# 规范化展示文件路径: 将各种路径格式统一为虚拟路径格式
 def _normalize_presented_filepath(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     filepath: str,
 ) -> str:
     """Normalize a presented file path to the `/mnt/user-data/outputs/*` contract.
@@ -80,9 +84,10 @@ def _normalize_presented_filepath(
     return f"{OUTPUTS_VIRTUAL_PREFIX}/{relative_path.as_posix()}"
 
 
+# 文件展示工具入口: 验证路径后将文件添加到 artifacts 状态中
 @tool("present_files", parse_docstring=True)
 def present_file_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     filepaths: list[str],
     tool_call_id: Annotated[str, InjectedToolCallId],
 ) -> Command:

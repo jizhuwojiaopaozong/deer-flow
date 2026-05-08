@@ -1,5 +1,7 @@
 """Tool error handling middleware and shared runtime middleware builders."""
 
+# 工具错误处理中间件: 将工具异常转换为错误 ToolMessage, 同时提供共享运行时中间件构建器
+
 import logging
 from collections.abc import Awaitable, Callable
 from typing import override
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 _MISSING_TOOL_CALL_ID = "missing_tool_call_id"
 
 
+# 工具错误处理中间件: 将工具异常转换为错误 ToolMessage, 防止运行中止
 class ToolErrorHandlingMiddleware(AgentMiddleware[AgentState]):
     """Convert tool exceptions into error ToolMessages so the run can continue."""
 

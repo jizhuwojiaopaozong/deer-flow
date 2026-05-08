@@ -1,3 +1,4 @@
+# 中文说明：模型管理路由，提供查询可用 AI 模型列表和详情的 API
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -7,6 +8,7 @@ from deerflow.config.app_config import AppConfig
 router = APIRouter(prefix="/api", tags=["models"])
 
 
+# 中文说明：单个模型信息的响应模型
 class ModelResponse(BaseModel):
     """Response model for model information."""
 
@@ -24,6 +26,7 @@ class TokenUsageResponse(BaseModel):
     enabled: bool = Field(default=False, description="Whether token usage display is enabled")
 
 
+# 中文说明：模型列表响应模型，包含所有模型和 token 用量配置
 class ModelsListResponse(BaseModel):
     """Response model for listing all models."""
 
@@ -37,6 +40,7 @@ class ModelsListResponse(BaseModel):
     summary="List All Models",
     description="Retrieve a list of all available AI models configured in the system.",
 )
+# 中文说明：列出所有已配置的 AI 模型，排除敏感字段
 async def list_models(config: AppConfig = Depends(get_config)) -> ModelsListResponse:
     """List all available models from configuration.
 
@@ -96,6 +100,7 @@ async def list_models(config: AppConfig = Depends(get_config)) -> ModelsListResp
     summary="Get Model Details",
     description="Retrieve detailed information about a specific AI model by its name.",
 )
+# 中文说明：根据模型名称获取单个模型详情，未找到时返回 404
 async def get_model(model_name: str, config: AppConfig = Depends(get_config)) -> ModelResponse:
     """Get a specific model by name.
 

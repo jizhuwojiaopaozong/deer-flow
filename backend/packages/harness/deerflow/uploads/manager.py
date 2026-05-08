@@ -1,3 +1,4 @@
+# 中文说明：共享的上传管理逻辑，纯业务逻辑无 HTTP 依赖，Gateway 和 Client 共用
 """Shared upload management logic.
 
 Pure business logic — no FastAPI/HTTP dependencies.
@@ -15,6 +16,7 @@ from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 from deerflow.runtime.user_context import get_effective_user_id
 
 
+# 中文说明：路径遍历错误，当路径逃逸出允许的基础目录时抛出
 class PathTraversalError(ValueError):
     """Raised when a path escapes its allowed base directory."""
 
@@ -27,6 +29,7 @@ class UnsafeUploadPathError(ValueError):
 _SAFE_THREAD_ID = re.compile(r"^[a-zA-Z0-9._-]+$")
 
 
+# 中文说明：验证线程 ID 的安全性，拒绝包含不安全字符的 ID
 def validate_thread_id(thread_id: str) -> None:
     """Reject thread IDs containing characters unsafe for filesystem paths.
 
@@ -50,6 +53,7 @@ def ensure_uploads_dir(thread_id: str) -> Path:
     return base
 
 
+# 中文说明：清理文件名，去除目录组件并拒绝遍历模式
 def normalize_filename(filename: str) -> str:
     """Sanitize a filename by extracting its basename.
 
@@ -173,6 +177,7 @@ def write_upload_file_no_symlink(base_dir: Path, filename: str, data: bytes) -> 
     return dest
 
 
+# 中文说明：列出目录中的文件（不含子目录），返回文件信息列表
 def list_files_in_dir(directory: Path) -> dict:
     """List files (not directories) in *directory*.
 
@@ -206,6 +211,7 @@ def list_files_in_dir(directory: Path) -> dict:
     return {"files": files, "count": len(files)}
 
 
+# 中文说明：安全删除文件，带路径遍历验证，可选清理配套的 Markdown 文件
 def delete_file_safe(base_dir: Path, filename: str, *, convertible_extensions: set[str] | None = None) -> dict:
     """Delete a file inside *base_dir* after path-traversal validation.
 
@@ -253,6 +259,7 @@ def upload_virtual_path(filename: str) -> str:
     return f"{VIRTUAL_PATH_PREFIX}/uploads/{filename}"
 
 
+# 中文说明：为文件列表添加虚拟路径、制品 URL 和格式化大小
 def enrich_file_listing(result: dict, thread_id: str) -> dict:
     """Add virtual paths, artifact URLs, and stringify sizes on a listing result.
 

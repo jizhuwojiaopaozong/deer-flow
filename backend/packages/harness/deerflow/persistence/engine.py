@@ -1,3 +1,4 @@
+# 中文说明：异步 SQLAlchemy 引擎生命周期管理，支持 memory/sqlite/postgres 后端
 """Async SQLAlchemy engine lifecycle management.
 
 Initializes at Gateway startup, provides session factory for
@@ -54,6 +55,7 @@ async def _auto_create_postgres_db(url: str) -> None:
         await maint_engine.dispose()
 
 
+# 中文说明：初始化异步引擎和会话工厂，自动创建数据库表
 async def init_engine(
     backend: str,
     *,
@@ -170,6 +172,7 @@ async def init_engine_from_config(config) -> None:
     )
 
 
+# 中文说明：获取异步会话工厂，memory 后端时返回 None
 def get_session_factory() -> async_sessionmaker[AsyncSession] | None:
     """Return the async session factory, or None if backend=memory."""
     return _session_factory
@@ -180,6 +183,7 @@ def get_engine() -> AsyncEngine | None:
     return _engine
 
 
+# 中文说明：关闭引擎，释放所有连接
 async def close_engine() -> None:
     """Dispose the engine, release all connections."""
     global _engine, _session_factory

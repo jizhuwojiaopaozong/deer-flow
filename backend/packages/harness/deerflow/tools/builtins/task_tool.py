@@ -1,3 +1,4 @@
+# 子代理任务工具: 将复杂任务委派给专用子代理, 支持后台执行和状态轮询
 """Task tool for delegating work to subagents."""
 
 import asyncio
@@ -6,9 +7,11 @@ import uuid
 from dataclasses import replace
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
-from langchain.tools import InjectedToolCallId, tool
+from langchain.tools import InjectedToolCallId, ToolRuntime, tool
 from langgraph.config import get_stream_writer
+from langgraph.typing import ContextT
 
+from deerflow.agents.thread_state import ThreadState
 from deerflow.config import get_app_config
 from deerflow.sandbox.security import LOCAL_BASH_SUBAGENT_DISABLED_MESSAGE, is_host_bash_allowed
 from deerflow.subagents import SubagentExecutor, get_available_subagent_names, get_subagent_config
@@ -19,7 +22,6 @@ from deerflow.subagents.executor import (
     get_background_task_result,
     request_cancel_background_task,
 )
-from deerflow.tools.types import Runtime
 
 if TYPE_CHECKING:
     from deerflow.config.app_config import AppConfig
@@ -27,6 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# 从运行时上下文获取应用配置: 用于子代理的配置继承
 def _get_runtime_app_config(runtime: Any) -> "AppConfig | None":
     context = getattr(runtime, "context", None)
     if isinstance(context, dict):
@@ -36,6 +39,7 @@ def _get_runtime_app_config(runtime: Any) -> "AppConfig | None":
     return None
 
 
+# 合并技能白名单: 父代理与子代理的技能列表取交集
 def _merge_skill_allowlists(parent: list[str] | None, child: list[str] | None) -> list[str] | None:
     """Return the effective subagent skill allowlist under the parent policy."""
     if parent is None:
@@ -47,13 +51,15 @@ def _merge_skill_allowlists(parent: list[str] | None, child: list[str] | None) -
     return [skill for skill in child if skill in parent_set]
 
 
+# 任务委派工具: 创建子代理执行独立任务, 支持异步轮询和 SSE 事件推送
 @tool("task", parse_docstring=True)
 async def task_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     prompt: str,
     subagent_type: str,
     tool_call_id: Annotated[str, InjectedToolCallId],
+    max_turns: int | None = None,
 ) -> str:
     """Delegate a task to a specialized subagent that runs in its own context.
 
@@ -89,6 +95,7 @@ async def task_tool(
         description: A short (3-5 word) description of the task for logging/display. ALWAYS PROVIDE THIS PARAMETER FIRST.
         prompt: The task description for the subagent. Be specific and clear about what needs to be done. ALWAYS PROVIDE THIS PARAMETER SECOND.
         subagent_type: The type of subagent to use. ALWAYS PROVIDE THIS PARAMETER THIRD.
+        max_turns: Optional maximum number of agent turns. Defaults to subagent's configured max.
     """
     runtime_app_config = _get_runtime_app_config(runtime)
     available_subagent_names = get_available_subagent_names(app_config=runtime_app_config) if runtime_app_config is not None else get_available_subagent_names()
@@ -109,6 +116,9 @@ async def task_tool(
     # Skills are loaded by SubagentExecutor per-session (aligned with Codex's pattern:
     # each subagent loads its own skills based on config, injected as conversation items).
     # No longer appended to system_prompt here.
+
+    if max_turns is not None:
+        overrides["max_turns"] = max_turns
 
     # Extract parent context from runtime
     sandbox_state = None

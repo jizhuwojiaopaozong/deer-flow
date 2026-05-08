@@ -1,3 +1,4 @@
+# 中文说明：LangGraph Server 认证处理器，复用 Gateway 的 JWT 逻辑，提供认证和数据过滤两层防护
 """LangGraph Server auth handler — shares JWT logic with Gateway.
 
 Loaded by LangGraph Server via langgraph.json ``auth.path``.
@@ -24,6 +25,7 @@ auth = Auth()
 _CSRF_METHODS = frozenset({"POST", "PUT", "DELETE", "PATCH"})
 
 
+# 中文说明：对状态变更请求执行双重提交 Cookie CSRF 检查，与 Gateway 的 CSRFMiddleware 逻辑一致
 def _check_csrf(request) -> None:
     """Enforce Double Submit Cookie CSRF check for state-changing requests.
 
@@ -50,6 +52,7 @@ def _check_csrf(request) -> None:
         )
 
 
+# 中文说明：验证会话 Cookie、解码 JWT、校验 token_version，同时执行 CSRF 检查
 @auth.authenticate
 async def authenticate(request):
     """Validate the session cookie, decode JWT, and check token_version.
@@ -91,6 +94,7 @@ async def authenticate(request):
     return payload.sub
 
 
+# 中文说明：写入时注入 user_id 元数据，读取时按 user_id 过滤，确保用户数据隔离
 @auth.on
 async def add_owner_filter(ctx: Auth.types.AuthContext, value: dict):
     """Inject user_id metadata on writes; filter by user_id on reads.

@@ -1,6 +1,8 @@
+# 中文说明：沙箱配置，定义容器镜像、端口、副本数、挂载和环境变量等参数
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# 中文说明：卷挂载配置，指定主机路径和容器路径的映射关系
 class VolumeMountConfig(BaseModel):
     """Configuration for a volume mount."""
 
@@ -9,6 +11,7 @@ class VolumeMountConfig(BaseModel):
     read_only: bool = Field(default=False, description="Whether the mount is read-only")
 
 
+# 中文说明：沙箱总配置，包含容器设置、输出截断限制等
 class SandboxConfig(BaseModel):
     """Config section for a sandbox.
 

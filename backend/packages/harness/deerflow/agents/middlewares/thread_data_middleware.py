@@ -1,3 +1,5 @@
+# 线程数据中间件: 创建每线程目录 (workspace, uploads, outputs), 注入 ThreadDataState
+
 import logging
 from datetime import UTC, datetime
 from typing import NotRequired, override
@@ -21,6 +23,7 @@ class ThreadDataMiddlewareState(AgentState):
     thread_data: NotRequired[ThreadDataState | None]
 
 
+# 线程数据中间件: 在代理启动前创建每线程的工作区、上传、输出目录
 class ThreadDataMiddleware(AgentMiddleware[ThreadDataMiddlewareState]):
     """Create thread data directories for each thread execution.
 

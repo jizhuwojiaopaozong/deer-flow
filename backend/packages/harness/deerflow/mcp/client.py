@@ -1,3 +1,5 @@
+# 中文说明：MCP客户端配置模块，构建MultiServerMCPClient所需的服务器连接参数
+
 """MCP client using langchain-mcp-adapters."""
 
 import logging
@@ -8,6 +10,7 @@ from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：根据MCP服务器配置构建连接参数，支持stdio、sse和http传输类型
 def build_server_params(server_name: str, config: McpServerConfig) -> dict[str, Any]:
     """Build server parameters for MultiServerMCPClient.
 
@@ -42,6 +45,7 @@ def build_server_params(server_name: str, config: McpServerConfig) -> dict[str, 
     return params
 
 
+# 中文说明：为所有已启用的MCP服务器构建配置字典
 def build_servers_config(extensions_config: ExtensionsConfig) -> dict[str, dict[str, Any]]:
     """Build servers configuration for MultiServerMCPClient.
 

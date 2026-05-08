@@ -1,3 +1,4 @@
+# 中文说明：守卫提供者协议和数据结构，定义工具调用授权的接口规范
 """GuardrailProvider protocol and data structures for pre-tool-call authorization."""
 
 from __future__ import annotations
@@ -7,6 +8,7 @@ from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass
+# 中文说明：守卫请求上下文，包含工具名称、输入参数和代理信息
 class GuardrailRequest:
     """Context passed to the provider for each tool call."""
 
@@ -27,6 +29,7 @@ class GuardrailReason:
 
 
 @dataclass
+# 中文说明：守卫决策结果，包含允许/拒绝标志和原因列表
 class GuardrailDecision:
     """Provider's allow/deny verdict (aligned with OAP Decision object)."""
 
@@ -37,6 +40,7 @@ class GuardrailDecision:
 
 
 @runtime_checkable
+# 中文说明：守卫提供者协议，定义同步和异步的工具调用授权接口
 class GuardrailProvider(Protocol):
     """Contract for pluggable tool-call authorization.
 

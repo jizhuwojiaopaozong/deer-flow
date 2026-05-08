@@ -1,5 +1,7 @@
 """In-memory run registry with optional persistent RunStore backing."""
 
+# 运行管理器模块: 内存运行注册表, 管理运行的创建、状态转换、取消和清理
+
 from __future__ import annotations
 
 import asyncio
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# 运行记录: 包含运行 ID、线程 ID、状态、任务句柄、中止事件等
 @dataclass
 class RunRecord:
     """Mutable record for a single run."""
@@ -38,6 +41,7 @@ class RunRecord:
     error: str | None = None
 
 
+# 运行管理器: 内存注册表 + 可选持久化存储, 所有变更由 asyncio 锁保护
 class RunManager:
     """In-memory run registry with optional persistent RunStore backing.
 
@@ -51,6 +55,7 @@ class RunManager:
         self._lock = asyncio.Lock()
         self._store = store
 
+    # 尽力持久化运行记录到后端存储
     async def _persist_to_store(self, record: RunRecord) -> None:
         """Best-effort persist run record to backing store."""
         if self._store is None:
@@ -69,6 +74,7 @@ class RunManager:
         except Exception:
             logger.warning("Failed to persist run %s to store", record.run_id, exc_info=True)
 
+    # 持久化运行完成数据: token 使用量等
     async def update_run_completion(self, run_id: str, **kwargs) -> None:
         """Persist token usage and completion data to the backing store."""
         if self._store is not None:
@@ -77,6 +83,7 @@ class RunManager:
             except Exception:
                 logger.warning("Failed to persist run completion for %s", run_id, exc_info=True)
 
+    # 创建新的待处理运行并注册
     async def create(
         self,
         thread_id: str,
@@ -108,10 +115,12 @@ class RunManager:
         logger.info("Run created: run_id=%s thread_id=%s", run_id, thread_id)
         return record
 
+    # 按 ID 获取运行记录
     def get(self, run_id: str) -> RunRecord | None:
         """Return a run record by ID, or ``None``."""
         return self._runs.get(run_id)
 
+    # 列出指定线程的所有运行, 按创建时间倒序
     async def list_by_thread(self, thread_id: str) -> list[RunRecord]:
         """Return all runs for a given thread, newest first."""
         async with self._lock:
@@ -119,6 +128,7 @@ class RunManager:
             # us deterministic newest-first results even when timestamps tie.
             return [r for r in self._runs.values() if r.thread_id == thread_id]
 
+    # 转换运行状态
     async def set_status(self, run_id: str, status: RunStatus, *, error: str | None = None) -> None:
         """Transition a run to a new status."""
         async with self._lock:
@@ -137,6 +147,7 @@ class RunManager:
                 logger.warning("Failed to persist status update for run %s", run_id, exc_info=True)
         logger.info("Run %s -> %s", run_id, status.value)
 
+    # 请求取消运行: interrupt 保留检查点, rollback 回滚到运行前状态
     async def cancel(self, run_id: str, *, action: str = "interrupt") -> bool:
         """Request cancellation of a run.
 
@@ -162,6 +173,7 @@ class RunManager:
         logger.info("Run %s cancelled (action=%s)", run_id, action)
         return True
 
+    # 原子检查 + 创建: reject 策略在有活跃运行时抛出 ConflictError, interrupt/rollback 策略先取消再创建
     async def create_or_reject(
         self,
         thread_id: str,
@@ -228,11 +240,13 @@ class RunManager:
         logger.info("Run created: run_id=%s thread_id=%s", run_id, thread_id)
         return record
 
+    # 检查线程是否有待处理或正在运行的任务
     async def has_inflight(self, thread_id: str) -> bool:
         """Return ``True`` if *thread_id* has a pending or running run."""
         async with self._lock:
             return any(r.thread_id == thread_id and r.status in (RunStatus.pending, RunStatus.running) for r in self._runs.values())
 
+    # 延迟清理运行记录: 默认 5 分钟后移除
     async def cleanup(self, run_id: str, *, delay: float = 300) -> None:
         """Remove a run record after an optional delay."""
         if delay > 0:
@@ -242,9 +256,11 @@ class RunManager:
         logger.debug("Run record %s cleaned up", run_id)
 
 
+# 冲突错误: reject 策略下线程已有活跃运行时抛出
 class ConflictError(Exception):
     """Raised when multitask_strategy=reject and thread has inflight runs."""
 
 
+# 不支持的策略错误: 未实现的 multitask_strategy 值
 class UnsupportedStrategyError(Exception):
     """Raised when a multitask_strategy value is not yet implemented."""

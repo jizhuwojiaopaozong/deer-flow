@@ -1,3 +1,4 @@
+# 中文说明：线程虚拟路径解析工具，将沙箱内的虚拟路径转换为实际文件系统路径
 """Shared path resolution for thread virtual paths (e.g. mnt/user-data/outputs/...)."""
 
 from pathlib import Path
@@ -8,6 +9,7 @@ from deerflow.config.paths import get_paths
 from deerflow.runtime.user_context import get_effective_user_id
 
 
+# 中文说明：将虚拟路径（如 /mnt/user-data/outputs/file.txt）解析为线程目录下的实际文件系统路径
 def resolve_thread_virtual_path(thread_id: str, virtual_path: str) -> Path:
     """Resolve a virtual path to the actual filesystem path under thread user-data.
 

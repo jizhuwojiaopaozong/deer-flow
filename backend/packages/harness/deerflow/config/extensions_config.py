@@ -1,3 +1,4 @@
+# 中文说明：统一的扩展配置模块，管理 MCP 服务器和技能的配置
 """Unified extensions configuration for MCP servers and skills."""
 
 import json
@@ -10,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from deerflow.config.runtime_paths import existing_project_file
 
 
+# 中文说明：MCP 服务器的 OAuth 认证配置
 class McpOAuthConfig(BaseModel):
     """OAuth configuration for an MCP server (HTTP/SSE transports)."""
 
@@ -33,6 +35,7 @@ class McpOAuthConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+# 中文说明：单个 MCP 服务器的配置，支持 stdio/sse/http 三种传输方式
 class McpServerConfig(BaseModel):
     """Configuration for a single MCP server."""
 
@@ -54,6 +57,7 @@ class SkillStateConfig(BaseModel):
     enabled: bool = Field(default=True, description="Whether this skill is enabled")
 
 
+# 中文说明：统一扩展配置类，包含 MCP 服务器和技能的状态管理
 class ExtensionsConfig(BaseModel):
     """Unified configuration for MCP servers and skills."""
 
@@ -207,6 +211,7 @@ class ExtensionsConfig(BaseModel):
 _extensions_config: ExtensionsConfig | None = None
 
 
+# 中文说明：获取扩展配置的单例实例，首次调用时从文件加载
 def get_extensions_config() -> ExtensionsConfig:
     """Get the extensions config instance.
 

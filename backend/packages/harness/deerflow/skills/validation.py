@@ -1,3 +1,4 @@
+# 中文说明：技能 frontmatter 校验工具，验证 SKILL.md 的元数据格式
 """Skill frontmatter validation utilities.
 
 Pure-logic validation of SKILL.md frontmatter — no FastAPI or HTTP dependencies.
@@ -15,6 +16,7 @@ from deerflow.skills.types import SKILL_MD_FILE
 ALLOWED_FRONTMATTER_PROPERTIES = {"name", "description", "license", "allowed-tools", "metadata", "compatibility", "version", "author"}
 
 
+# 中文说明：校验技能目录中 SKILL.md 的 frontmatter 格式和必填字段
 def _validate_skill_frontmatter(skill_dir: Path) -> tuple[bool, str, str | None]:
     """Validate a skill directory's SKILL.md frontmatter.
 

@@ -1,3 +1,5 @@
+# 中文说明：子代理执行引擎，提供同步/异步任务执行、后台任务管理和事件循环隔离
+
 """Subagent execution engine."""
 
 import asyncio
@@ -36,6 +38,7 @@ if callable(_previous_shutdown_isolated_subagent_loop):
     _previous_shutdown_isolated_subagent_loop()
 
 
+# 中文说明：子代理执行状态枚举，包括待运行、运行中、已完成、失败、取消、超时等状态
 class SubagentStatus(Enum):
     """Status of a subagent execution."""
 
@@ -47,6 +50,7 @@ class SubagentStatus(Enum):
     TIMED_OUT = "timed_out"
 
 
+# 中文说明：子代理执行结果数据类，包含任务ID、状态、结果、错误信息和时间戳
 @dataclass
 class SubagentResult:
     """Result of a subagent execution.
@@ -94,6 +98,7 @@ _isolated_subagent_loop_started: threading.Event | None = None
 _isolated_subagent_loop_lock = threading.Lock()
 
 
+# 中文说明：在专用守护线程中运行持久化的隔离子代理事件循环
 def _run_isolated_subagent_loop(
     loop: asyncio.AbstractEventLoop,
     started_event: threading.Event,
@@ -107,6 +112,7 @@ def _run_isolated_subagent_loop(
         started_event.clear()
 
 
+# 中文说明：停止并关闭持久化的隔离子代理事件循环，用于进程退出时清理资源
 def _shutdown_isolated_subagent_loop() -> None:
     """Stop and close the persistent isolated subagent loop."""
     global _isolated_subagent_loop, _isolated_subagent_loop_thread, _isolated_subagent_loop_started
@@ -144,6 +150,7 @@ def _shutdown_isolated_subagent_loop() -> None:
 atexit.register(_shutdown_isolated_subagent_loop)
 
 
+# 中文说明：获取或创建隔离子代理事件循环单例，确保异步资源不被短生命周期循环绑定
 def _get_isolated_subagent_loop() -> asyncio.AbstractEventLoop:
     """Return the persistent event loop used by isolated subagent executions."""
     global _isolated_subagent_loop, _isolated_subagent_loop_thread, _isolated_subagent_loop_started
@@ -175,6 +182,7 @@ def _get_isolated_subagent_loop() -> asyncio.AbstractEventLoop:
         return _isolated_subagent_loop
 
 
+# 中文说明：将协程提交到隔离事件循环，同时保留上下文变量状态
 def _submit_to_isolated_loop_in_context(
     context: Context,
     coro_factory: Callable[[], Coroutine[Any, Any, SubagentResult]],
@@ -188,6 +196,7 @@ def _submit_to_isolated_loop_in_context(
     )
 
 
+# 中文说明：根据子代理配置的允许/禁止列表过滤工具集
 def _filter_tools(
     all_tools: list[BaseTool],
     allowed: list[str] | None,
@@ -218,6 +227,7 @@ def _filter_tools(
     return filtered
 
 
+# 中文说明：子代理执行器，负责创建代理实例、加载技能、构建状态并执行任务
 class SubagentExecutor:
     """Executor for running subagents."""
 
@@ -645,6 +655,7 @@ class SubagentExecutor:
             result.completed_at = datetime.now()
             return result
 
+    # 中文说明：在后台线程中启动异步任务执行，返回任务ID供后续查询状态
     def execute_async(self, task: str, task_id: str | None = None) -> str:
         """Start a task execution in the background.
 
@@ -720,6 +731,7 @@ class SubagentExecutor:
 MAX_CONCURRENT_SUBAGENTS = 3
 
 
+# 中文说明：请求取消正在运行的后台任务，通过设置取消事件实现协作式取消
 def request_cancel_background_task(task_id: str) -> None:
     """Signal a running background task to stop.
 
@@ -738,6 +750,7 @@ def request_cancel_background_task(task_id: str) -> None:
             logger.info("Requested cancellation for background task %s", task_id)
 
 
+# 中文说明：根据任务ID获取后台任务的执行结果
 def get_background_task_result(task_id: str) -> SubagentResult | None:
     """Get the result of a background task.
 
@@ -751,6 +764,7 @@ def get_background_task_result(task_id: str) -> SubagentResult | None:
         return _background_tasks.get(task_id)
 
 
+# 中文说明：列出所有后台任务的执行结果
 def list_background_tasks() -> list[SubagentResult]:
     """List all background tasks.
 
@@ -761,6 +775,7 @@ def list_background_tasks() -> list[SubagentResult]:
         return list(_background_tasks.values())
 
 
+# 中文说明：清理已完成的后台任务，防止内存泄漏，仅移除终态任务
 def cleanup_background_task(task_id: str) -> None:
     """Remove a completed task from background tasks.
 

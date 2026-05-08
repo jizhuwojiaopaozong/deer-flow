@@ -13,6 +13,8 @@ snapshots.  The JS open-source LangGraph API server works around this via
 internal checkpoint callbacks that are not exposed in the Python public API.
 """
 
+# 后台 Agent 执行模块: 在 asyncio.Task 中运行 Agent 图, 通过 StreamBridge 发布 SSE 事件
+
 from __future__ import annotations
 
 import asyncio
@@ -41,6 +43,7 @@ logger = logging.getLogger(__name__)
 _VALID_LG_MODES = {"values", "updates", "checkpoints", "tasks", "debug", "messages", "custom"}
 
 
+# 构建运行时上下文: 包含 thread_id, run_id, app_config, 供工具和中间件访问
 def _build_runtime_context(
     thread_id: str,
     run_id: str,
@@ -68,6 +71,7 @@ def _build_runtime_context(
     return runtime_ctx
 
 
+# 运行上下文数据类: 聚合检查点、存储、事件存储等基础设施依赖
 @dataclass(frozen=True)
 class RunContext:
     """Infrastructure dependencies for a single agent run.
@@ -85,6 +89,7 @@ class RunContext:
     app_config: AppConfig | None = field(default=None)
 
 
+# 将运行时上下文注入 LangGraph 配置, 供 langgraph 1.1+ 的 runtime.context 访问
 def _install_runtime_context(config: dict, runtime_context: dict[str, Any]) -> None:
     existing_context = config.get("context")
     if isinstance(existing_context, dict):
@@ -97,6 +102,7 @@ def _install_runtime_context(config: dict, runtime_context: dict[str, Any]) -> N
     config["context"] = dict(runtime_context)
 
 
+# 检测代理工厂是否接受 app_config 参数 (通过反射签名)
 def _compute_agent_factory_supports_app_config(agent_factory: Any) -> bool:
     try:
         return "app_config" in inspect.signature(agent_factory).parameters
@@ -117,6 +123,7 @@ def _agent_factory_supports_app_config(agent_factory: Any) -> bool:
         return _compute_agent_factory_supports_app_config(agent_factory)
 
 
+# 核心执行函数: 在 asyncio.Task 中运行 Agent 图, 流式发布事件到 StreamBridge
 async def run_agent(
     bridge: StreamBridge,
     run_manager: RunManager,
@@ -397,6 +404,7 @@ async def run_agent(
 # ---------------------------------------------------------------------------
 
 
+# 调用检查点方法: 支持异步和同步两种变体
 async def _call_checkpointer_method(checkpointer: Any, async_name: str, sync_name: str, *args: Any, **kwargs: Any) -> Any:
     """Call a checkpointer method, supporting async and sync variants."""
     method = getattr(checkpointer, async_name, None) or getattr(checkpointer, sync_name, None)
@@ -408,6 +416,7 @@ async def _call_checkpointer_method(checkpointer: Any, async_name: str, sync_nam
     return result
 
 
+# 回滚到运行前检查点: 恢复线程状态到运行开始前的快照
 async def _rollback_to_pre_run_checkpoint(
     *,
     checkpointer: Any,
@@ -501,11 +510,13 @@ async def _rollback_to_pre_run_checkpoint(
         )
 
 
+# 生成新检查点标记: 使用空检查点的 id 和时间戳
 def _new_checkpoint_marker() -> dict[str, str]:
     marker = empty_checkpoint()
     return {"id": marker["id"], "ts": marker["ts"]}
 
 
+# 将 LangGraph 内部流模式名称映射为 SSE 事件名称
 def _lg_mode_to_sse_event(mode: str) -> str:
     """Map LangGraph internal stream_mode name to SSE event name.
 
@@ -518,6 +529,7 @@ def _lg_mode_to_sse_event(mode: str) -> str:
     return mode
 
 
+# 从图输入中提取 HumanMessage: 用于事件记录
 def _extract_human_message(graph_input: dict) -> HumanMessage | None:
     """Extract or construct a HumanMessage from graph_input for event recording.
 
@@ -543,6 +555,7 @@ def _extract_human_message(graph_input: dict) -> HumanMessage | None:
     return None
 
 
+# 解包多模式或子图流项: 将 (mode, chunk) 元组分离
 def _unpack_stream_item(
     item: Any,
     lg_modes: list[str],

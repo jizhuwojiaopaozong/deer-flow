@@ -1,3 +1,4 @@
+# 中文说明：基于 Serper (Google Search API) 的网页搜索工具实现
 """
 Web Search Tool - Search the web using Serper (Google Search API).
 
@@ -20,6 +21,7 @@ _SERPER_ENDPOINT = "https://google.serper.dev/search"
 _api_key_warned = False
 
 
+# 中文说明：从配置或环境变量获取 Serper API 密钥
 def _get_api_key() -> str | None:
     config = get_app_config().get_tool_config("web_search")
     if config is not None:
@@ -29,6 +31,7 @@ def _get_api_key() -> str | None:
     return os.getenv("SERPER_API_KEY")
 
 
+# 中文说明：使用 Serper 执行 Google 搜索并返回标准化结果
 @tool("web_search", parse_docstring=True)
 def web_search_tool(query: str, max_results: int = 5) -> str:
     """Search the web for information using Google Search via Serper.

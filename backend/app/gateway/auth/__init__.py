@@ -1,3 +1,4 @@
+# 中文说明：DeerFlow 认证模块，提供 JWT 认证、提供者工厂模式和用户仓库接口
 """Authentication module for DeerFlow.
 
 This module provides:

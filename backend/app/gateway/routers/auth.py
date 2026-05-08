@@ -1,3 +1,4 @@
+# 中文说明：认证端点，提供本地登录、注册、登出、密码修改、初始化管理员和 OAuth 占位接口
 """Authentication endpoints."""
 
 import logging
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 # ── Request/Response Models ──────────────────────────────────────────────
 
 
+# 中文说明：登录响应模型（令牌仅存在于 HttpOnly Cookie 中）
 class LoginResponse(BaseModel):
     """Response model for login — token only lives in HttpOnly cookie."""
 
@@ -131,6 +133,7 @@ class MessageResponse(BaseModel):
 # ── Helpers ───────────────────────────────────────────────────────────────
 
 
+# 中文说明：设置 access_token HttpOnly Cookie 到响应中
 def _set_session_cookie(response: Response, token: str, request: Request) -> None:
     """Set the access_token HttpOnly cookie on the response."""
     config = get_auth_config()
@@ -184,6 +187,7 @@ def _trusted_proxies() -> list:
     return nets
 
 
+# 中文说明：提取真实客户端 IP 用于速率限制，支持受信代理的 X-Real-IP 头
 def _get_client_ip(request: Request) -> str:
     """Extract the real client IP for rate limiting.
 
@@ -273,6 +277,7 @@ def _record_login_success(ip: str) -> None:
 
 
 @router.post("/login/local", response_model=LoginResponse)
+# 中文说明：本地邮箱/密码登录，包含速率限制和失败计数
 async def login_local(
     request: Request,
     response: Response,
@@ -302,6 +307,7 @@ async def login_local(
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+# 中文说明：注册新用户账户（始终为 user 角色），注册后自动登录
 async def register(request: Request, response: Response, body: RegisterRequest):
     """Register a new user account (always 'user' role).
 
@@ -323,6 +329,7 @@ async def register(request: Request, response: Response, body: RegisterRequest):
 
 
 @router.post("/logout", response_model=MessageResponse)
+# 中文说明：通过清除 Cookie 登出当前用户
 async def logout(request: Request, response: Response):
     """Logout current user by clearing the cookie."""
     response.delete_cookie(key="access_token", secure=is_secure_request(request), samesite="lax")
@@ -330,6 +337,7 @@ async def logout(request: Request, response: Response):
 
 
 @router.post("/change-password", response_model=MessageResponse)
+# 中文说明：修改当前认证用户的密码，支持首次设置流程，修改后旧令牌自动失效
 async def change_password(request: Request, response: Response, body: ChangePasswordRequest):
     """Change password for the currently authenticated user.
 
@@ -376,6 +384,7 @@ async def change_password(request: Request, response: Response, body: ChangePass
 
 
 @router.get("/me", response_model=UserResponse)
+# 中文说明：获取当前认证用户信息
 async def get_me(request: Request):
     """Get current authenticated user info."""
     user = await get_current_user_from_request(request)
@@ -388,6 +397,7 @@ _MAX_TRACKED_SETUP_STATUS_IPS = 10000
 
 
 @router.get("/setup-status")
+# 中文说明：检查管理员账户是否存在，无管理员时返回 needs_setup=True（含速率限制）
 async def setup_status(request: Request):
     """Check if an admin account exists. Returns needs_setup=True when no admin exists."""
     client_ip = _get_client_ip(request)
@@ -427,6 +437,7 @@ class InitializeAdminRequest(BaseModel):
 
 
 @router.post("/initialize", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+# 中文说明：首次系统初始化时创建管理员账户，仅在无管理员时可调用
 async def initialize_admin(request: Request, response: Response, body: InitializeAdminRequest):
     """Create the first admin account on initial system setup.
 

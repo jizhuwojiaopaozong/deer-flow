@@ -1,3 +1,5 @@
+# 中文说明：ChatGPT Codex响应API提供者，使用Codex CLI OAuth令牌调用Codex端点
+
 """Custom OpenAI Codex provider using ChatGPT Codex Responses API.
 
 Uses Codex CLI OAuth tokens with chatgpt.com/backend-api/codex/responses endpoint.
@@ -29,6 +31,7 @@ logger = logging.getLogger(__name__)
 CODEX_BASE_URL = "https://chatgpt.com/backend-api/codex"
 
 
+# 中文说明：将Codex/Responses API的token使用量转换为LangChain格式
 def _build_usage_metadata(oai_usage: dict) -> dict:
     """Convert Codex/Responses API usage dict to LangChain usage_metadata format.
 
@@ -58,6 +61,7 @@ def _build_usage_metadata(oai_usage: dict) -> dict:
 MAX_RETRIES = 3
 
 
+# 中文说明：基于ChatGPT Codex Responses API的LangChain聊天模型，支持工具调用和推理
 class CodexChatModel(BaseChatModel):
     """LangChain chat model using ChatGPT Codex Responses API.
 

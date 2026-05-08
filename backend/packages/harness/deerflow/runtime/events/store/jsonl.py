@@ -1,3 +1,4 @@
+# 中文说明：基于 JSONL 文件的运行事件存储实现
 """JSONL file-backed RunEventStore implementation.
 
 Each run's events are stored in a single file:
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 _SAFE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_\-]+$")
 
 
+# 中文说明：JSONL 文件运行事件存储，适合轻量级单节点部署
 class JsonlRunEventStore(RunEventStore):
     def __init__(self, base_dir: str | Path | None = None):
         self._base_dir = Path(base_dir) if base_dir else Path(".deer-flow")

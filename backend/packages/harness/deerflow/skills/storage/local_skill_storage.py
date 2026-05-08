@@ -1,3 +1,4 @@
+# 中文说明：基于本地文件系统的技能存储实现
 """Local-filesystem implementation of ``SkillStorage``."""
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SKILLS_CONTAINER_PATH = "/mnt/skills"
 
 
+# 中文说明：本地文件系统技能存储，管理 public/custom 目录下的技能文件
 class LocalSkillStorage(SkillStorage):
     """Skill storage backed by the local filesystem.
 
@@ -91,6 +93,7 @@ class LocalSkillStorage(SkillStorage):
             tmp_path = Path(tmp_file.name)
         tmp_path.replace(target)
 
+    # 中文说明：从 .skill ZIP 档案异步安装技能到 custom 目录
     async def ainstall_skill_from_archive(self, archive_path: str | Path) -> dict:
         import zipfile
 

@@ -1,3 +1,4 @@
+# 中文说明：Telegram 渠道实现，通过长轮询连接（无需公网 IP）
 """Telegram channel — connects via long-polling (no public IP needed)."""
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from app.channels.message_bus import InboundMessage, InboundMessageType, Message
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：Telegram 机器人类，使用长轮询方式接收消息
 class TelegramChannel(Channel):
     """Telegram bot channel using long-polling.
 
@@ -36,6 +38,7 @@ class TelegramChannel(Channel):
         # chat_id -> last sent message_id for threaded replies
         self._last_bot_message: dict[str, int] = {}
 
+    # 中文说明：启动 Telegram 渠道，构建 Application 并在独立线程中运行轮询
     async def start(self) -> None:
         if self._running:
             return
@@ -87,6 +90,7 @@ class TelegramChannel(Channel):
         self._application = None
         logger.info("Telegram channel stopped")
 
+    # 中文说明：发送消息到 Telegram，支持重试
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         if not self._application:
             return
@@ -129,6 +133,7 @@ class TelegramChannel(Channel):
             raise RuntimeError("Telegram send failed without an exception from any attempt")
         raise last_exc
 
+    # 中文说明：发送文件/图片到 Telegram 聊天
     async def send_file(self, msg: OutboundMessage, attachment: ResolvedAttachment) -> bool:
         if not self._application:
             return False
@@ -198,6 +203,7 @@ class TelegramChannel(Channel):
         except Exception:
             logger.exception("[Telegram] Failed to inspect future for %s (msg_id=%s)", name, msg_id)
 
+    # 中文说明：在独立线程中运行 Telegram 轮询
     def _run_polling(self) -> None:
         """Run telegram polling in a dedicated thread."""
         self._tg_loop = asyncio.new_event_loop()
@@ -274,6 +280,7 @@ class TelegramChannel(Channel):
         else:
             logger.warning("[Telegram] Main loop not running. Cannot publish inbound message.")
 
+    # 中文说明：处理普通文本消息，根据聊天类型确定 topic_id
     async def _on_text(self, update, context) -> None:
         """Handle regular text messages."""
         if not self._check_user(update.effective_user.id):

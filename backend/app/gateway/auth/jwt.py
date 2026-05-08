@@ -1,3 +1,4 @@
+# 中文说明：JWT 令牌创建和验证模块
 """JWT token creation and verification."""
 
 from datetime import UTC, datetime, timedelta
@@ -9,6 +10,7 @@ from app.gateway.auth.config import get_auth_config
 from app.gateway.auth.errors import TokenError
 
 
+# 中文说明：JWT 令牌载荷模型，包含用户ID、过期时间、签发时间和令牌版本
 class TokenPayload(BaseModel):
     """JWT token payload."""
 
@@ -18,6 +20,7 @@ class TokenPayload(BaseModel):
     ver: int = 0  # token_version — must match User.token_version
 
 
+# 中文说明：创建 JWT 访问令牌
 def create_access_token(user_id: str, expires_delta: timedelta | None = None, token_version: int = 0) -> str:
     """Create a JWT access token.
 
@@ -37,6 +40,7 @@ def create_access_token(user_id: str, expires_delta: timedelta | None = None, to
     return jwt.encode(payload, config.jwt_secret, algorithm="HS256")
 
 
+# 中文说明：解码并验证 JWT 令牌，返回 TokenPayload 或具体错误类型
 def decode_token(token: str) -> TokenPayload | TokenError:
     """Decode and validate a JWT token.
 

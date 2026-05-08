@@ -1,3 +1,4 @@
+# 中文说明：对话建议路由，基于最近对话上下文使用 LLM 生成后续问题建议
 import json
 import logging
 
@@ -20,12 +21,14 @@ class SuggestionMessage(BaseModel):
     content: str = Field(..., description="Message content as plain text")
 
 
+# 中文说明：建议请求模型，包含最近对话消息和期望建议数量
 class SuggestionsRequest(BaseModel):
     messages: list[SuggestionMessage] = Field(..., description="Recent conversation messages")
     n: int = Field(default=3, ge=1, le=5, description="Number of suggestions to generate")
     model_name: str | None = Field(default=None, description="Optional model override")
 
 
+# 中文说明：建议响应模型
 class SuggestionsResponse(BaseModel):
     suggestions: list[str] = Field(default_factory=list, description="Suggested follow-up questions")
 
@@ -102,6 +105,7 @@ def _format_conversation(messages: list[SuggestionMessage]) -> str:
     description="Generate short follow-up questions a user might ask next, based on recent conversation context.",
 )
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：生成后续问题建议，调用 LLM 根据对话上下文生成短问题
 async def generate_suggestions(
     thread_id: str,
     body: SuggestionsRequest,

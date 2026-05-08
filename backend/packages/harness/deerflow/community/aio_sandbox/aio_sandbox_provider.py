@@ -1,3 +1,4 @@
+# 中文说明：AIO 沙箱提供者，管理沙箱容器的完整生命周期（创建、复用、回收、销毁）
 """AIO Sandbox Provider — orchestrates sandbox lifecycle with pluggable backends.
 
 This provider composes:
@@ -66,6 +67,7 @@ def _unlock_file(lock_file) -> None:
     msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
 
 
+# 中文说明：沙箱提供者，支持本地 Docker/Apple Container 和远程 K8s 两种后端，含空闲超时和信号处理
 class AioSandboxProvider(SandboxProvider):
     """Sandbox provider that manages containers running the AIO sandbox.
 
@@ -418,6 +420,7 @@ class AioSandboxProvider(SandboxProvider):
 
     # ── Core: acquire / get / release / shutdown ─────────────────────────
 
+    # 中文说明：获取沙箱环境，相同 thread_id 会复用已有沙箱
     def acquire(self, thread_id: str | None = None) -> str:
         """Acquire a sandbox environment and return its ID.
 
@@ -620,6 +623,7 @@ class AioSandboxProvider(SandboxProvider):
                 self._last_activity[sandbox_id] = time.time()
             return sandbox
 
+    # 中文说明：释放沙箱到温池，容器保持运行以便快速复用
     def release(self, sandbox_id: str) -> None:
         """Release a sandbox from active use into the warm pool.
 
@@ -646,6 +650,7 @@ class AioSandboxProvider(SandboxProvider):
 
         logger.info(f"Released sandbox {sandbox_id} to warm pool (container still running)")
 
+    # 中文说明：销毁沙箱，停止容器并释放所有资源
     def destroy(self, sandbox_id: str) -> None:
         """Destroy a sandbox: stop the container and free all resources.
 
@@ -675,6 +680,7 @@ class AioSandboxProvider(SandboxProvider):
             self._backend.destroy(info)
             logger.info(f"Destroyed sandbox {sandbox_id}")
 
+    # 中文说明：关闭所有沙箱，线程安全且幂等
     def shutdown(self) -> None:
         """Shutdown all sandboxes. Thread-safe and idempotent."""
         with self._lock:

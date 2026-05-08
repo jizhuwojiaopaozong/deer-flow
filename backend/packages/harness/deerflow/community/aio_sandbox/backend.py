@@ -1,3 +1,4 @@
+# 中文说明：沙箱配置后端的抽象基类，定义创建、销毁、发现等接口
 """Abstract base class for sandbox provisioning backends."""
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from .sandbox_info import SandboxInfo
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：轮询沙箱健康端点直到就绪或超时
 def wait_for_sandbox_ready(sandbox_url: str, timeout: int = 30) -> bool:
     """Poll sandbox health endpoint until ready or timeout.
 
@@ -35,6 +37,7 @@ def wait_for_sandbox_ready(sandbox_url: str, timeout: int = 30) -> bool:
     return False
 
 
+# 中文说明：沙箱配置后端抽象类，支持本地容器和远程 K8s 两种实现
 class SandboxBackend(ABC):
     """Abstract base for sandbox provisioning backends.
 

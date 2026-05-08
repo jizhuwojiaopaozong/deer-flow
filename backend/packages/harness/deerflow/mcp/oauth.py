@@ -1,3 +1,5 @@
+# 中文说明：MCP OAuth令牌管理模块，支持client_credentials和refresh_token两种授权方式
+
 """OAuth token support for MCP HTTP/SSE servers."""
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from deerflow.config.extensions_config import ExtensionsConfig, McpOAuthConfig
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：缓存的OAuth令牌数据类
 @dataclass
 class _OAuthToken:
     """Cached OAuth token."""
@@ -22,6 +25,7 @@ class _OAuthToken:
     expires_at: datetime
 
 
+# 中文说明：OAuth令牌管理器，负责获取、缓存和刷新MCP服务器的OAuth令牌
 class OAuthTokenManager:
     """Acquire/cache/refresh OAuth tokens for MCP servers."""
 
@@ -119,6 +123,7 @@ class OAuthTokenManager:
         return _OAuthToken(access_token=access_token, token_type=token_type, expires_at=expires_at)
 
 
+# 中文说明：构建OAuth工具拦截器，在MCP工具调用时自动注入Authorization头
 def build_oauth_tool_interceptor(extensions_config: ExtensionsConfig) -> Any | None:
     """Build a tool interceptor that injects OAuth Authorization headers."""
     token_manager = OAuthTokenManager.from_extensions_config(extensions_config)
@@ -137,6 +142,7 @@ def build_oauth_tool_interceptor(extensions_config: ExtensionsConfig) -> Any | N
     return oauth_interceptor
 
 
+# 中文说明：获取MCP服务器连接的初始OAuth Authorization头
 async def get_initial_oauth_headers(extensions_config: ExtensionsConfig) -> dict[str, str]:
     """Get initial OAuth Authorization headers for MCP server connections."""
     token_manager = OAuthTokenManager.from_extensions_config(extensions_config)

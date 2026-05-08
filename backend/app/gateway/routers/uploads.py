@@ -1,3 +1,4 @@
+# 中文说明：文件上传路由，处理多文件上传、自动文档转换、沙箱同步和文件管理
 """Upload router for handling file uploads."""
 
 import logging
@@ -38,6 +39,7 @@ DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024
 DEFAULT_MAX_TOTAL_SIZE = 100 * 1024 * 1024
 
 
+# 中文说明：文件上传响应模型
 class UploadResponse(BaseModel):
     """Response model for file upload."""
 
@@ -47,6 +49,7 @@ class UploadResponse(BaseModel):
     skipped_files: list[str] = Field(default_factory=list)
 
 
+# 中文说明：应用级上传限制配置，暴露给客户端
 class UploadLimits(BaseModel):
     """Application-level upload limits exposed to clients."""
 
@@ -168,6 +171,7 @@ def _auto_convert_documents_enabled(app_config: AppConfig) -> bool:
 
 @router.post("", response_model=UploadResponse)
 @require_permission("threads", "write", owner_check=True, require_existing=False)
+# 中文说明：上传多个文件到线程的上传目录，支持大小限制、自动文档转换和沙箱同步
 async def upload_files(
     thread_id: str,
     request: Request,
@@ -298,6 +302,7 @@ async def get_upload_limits(
 
 @router.get("/list", response_model=dict)
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：列出线程上传目录中的所有文件
 async def list_uploaded_files(thread_id: str, request: Request) -> dict:
     """List all files in a thread's uploads directory."""
     try:
@@ -317,6 +322,7 @@ async def list_uploaded_files(thread_id: str, request: Request) -> dict:
 
 @router.delete("/{filename}")
 @require_permission("threads", "delete", owner_check=True, require_existing=True)
+# 中文说明：删除线程上传目录中的指定文件
 async def delete_uploaded_file(thread_id: str, filename: str, request: Request) -> dict:
     """Delete a file from a thread's uploads directory."""
     try:

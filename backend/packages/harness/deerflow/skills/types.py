@@ -1,3 +1,4 @@
+# 中文说明：技能类型定义，包含技能分类枚举和技能数据类
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -5,6 +6,7 @@ from pathlib import Path
 SKILL_MD_FILE = "SKILL.md"
 
 
+# 中文说明：技能来源分类枚举，区分内置技能和用户自定义技能
 class SkillCategory(StrEnum):
     """Source category for a skill.
 
@@ -17,6 +19,7 @@ class SkillCategory(StrEnum):
 
 
 @dataclass
+# 中文说明：技能数据类，包含名称、描述、路径和分类等元信息
 class Skill:
     """Represents a skill with its metadata and file path"""
 
@@ -30,12 +33,14 @@ class Skill:
     allowed_tools: list[str] | None = None
     enabled: bool = False  # Whether this skill is enabled
 
+    # 中文说明：返回技能相对于分类根目录的路径
     @property
     def skill_path(self) -> str:
         """Returns the relative path from the category root (skills/{category}) to this skill's directory"""
         path = self.relative_path.as_posix()
         return "" if path == "." else path
 
+    # 中文说明：获取技能在容器中的完整挂载路径
     def get_container_path(self, container_base_path: str = "/mnt/skills") -> str:
         """
         Get the full path to this skill in the container.
@@ -52,6 +57,7 @@ class Skill:
             return f"{category_base}/{skill_path}"
         return category_base
 
+    # 中文说明：获取技能主文件 SKILL.md 在容器中的完整路径
     def get_container_file_path(self, container_base_path: str = "/mnt/skills") -> str:
         """
         Get the full path to this skill's main file (SKILL.md) in the container.

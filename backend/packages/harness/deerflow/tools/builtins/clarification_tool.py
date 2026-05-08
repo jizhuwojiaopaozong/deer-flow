@@ -1,8 +1,10 @@
+# 澄清提问工具: 当代理需要更多信息时向用户提问, 由中间件拦截执行
 from typing import Literal
 
 from langchain.tools import tool
 
 
+# 向用户请求澄清: 支持多种澄清类型, 执行会被中断直到用户回复
 @tool("ask_clarification", parse_docstring=True, return_direct=True)
 def ask_clarification_tool(
     question: str,

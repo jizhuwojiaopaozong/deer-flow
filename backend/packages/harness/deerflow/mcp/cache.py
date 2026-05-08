@@ -1,3 +1,5 @@
+# 中文说明：MCP工具缓存模块，支持懒加载和配置文件变更自动失效
+
 """Cache for MCP tools to avoid repeated loading."""
 
 import asyncio
@@ -53,6 +55,7 @@ def _is_cache_stale() -> bool:
     return False
 
 
+# 中文说明：初始化并缓存MCP工具，应在应用启动时调用一次
 async def initialize_mcp_tools() -> list[BaseTool]:
     """Initialize and cache MCP tools.
 
@@ -79,6 +82,7 @@ async def initialize_mcp_tools() -> list[BaseTool]:
         return _mcp_tools_cache
 
 
+# 中文说明：获取缓存的MCP工具，支持懒加载和配置文件变更检测自动重载
 def get_cached_mcp_tools() -> list[BaseTool]:
     """Get cached MCP tools with lazy initialization.
 
@@ -130,6 +134,7 @@ def get_cached_mcp_tools() -> list[BaseTool]:
     return _mcp_tools_cache or []
 
 
+# 中文说明：重置MCP工具缓存，用于测试或需要重新加载工具时
 def reset_mcp_tools_cache() -> None:
     """Reset the MCP tools cache.
 

@@ -1,3 +1,4 @@
+# 中文说明：链路追踪配置，支持 LangSmith 和 Langfuse 两种追踪提供商
 import os
 import threading
 
@@ -23,6 +24,7 @@ class LangSmithTracingConfig(BaseModel):
             raise ValueError("LangSmith tracing is enabled but LANGSMITH_API_KEY (or LANGCHAIN_API_KEY) is not set.")
 
 
+# 中文说明：Langfuse 追踪配置
 class LangfuseTracingConfig(BaseModel):
     """Configuration for Langfuse tracing."""
 
@@ -47,6 +49,7 @@ class LangfuseTracingConfig(BaseModel):
             raise ValueError(f"Langfuse tracing is enabled but required settings are missing: {', '.join(missing)}")
 
 
+# 中文说明：追踪总配置，聚合所有追踪提供商的配置
 class TracingConfig(BaseModel):
     """Tracing configuration for supported providers."""
 
@@ -104,6 +107,7 @@ def _first_env_value(*names: str) -> str | None:
     return None
 
 
+# 中文说明：从环境变量获取追踪配置的单例实例
 def get_tracing_config() -> TracingConfig:
     """Get the current tracing configuration from environment variables."""
     global _tracing_config

@@ -1,3 +1,4 @@
+# 中文说明：基于 Jina AI Reader 的网页抓取工具，支持可读性提取
 import asyncio
 
 from langchain.tools import tool
@@ -9,6 +10,7 @@ from deerflow.utils.readability import ReadabilityExtractor
 readability_extractor = ReadabilityExtractor()
 
 
+# 中文说明：异步抓取网页内容并通过可读性提取器转换为 Markdown
 @tool("web_fetch", parse_docstring=True)
 async def web_fetch_tool(url: str) -> str:
     """Fetch the contents of a web page at a given URL.

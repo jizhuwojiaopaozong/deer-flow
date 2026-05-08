@@ -1,3 +1,4 @@
+# 中文说明：基于 LangGraph BaseStore 的内存线程元数据存储实现
 """In-memory ThreadMetaStore backed by LangGraph BaseStore.
 
 Used when database.backend=memory. Delegates to the LangGraph Store's
@@ -18,6 +19,7 @@ from deerflow.utils.time import coerce_iso, now_iso
 THREADS_NS: tuple[str, ...] = ("threads",)
 
 
+# 中文说明：内存线程元数据存储，用于 database.backend=memory 模式
 class MemoryThreadMetaStore(ThreadMetaStore):
     def __init__(self, store: BaseStore) -> None:
         self._store = store

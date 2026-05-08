@@ -1,5 +1,7 @@
 """Prompt templates for memory update and injection."""
 
+# 记忆提示词模板: 定义记忆更新和注入的 LLM 提示词
+
 import math
 import re
 from typing import Any
@@ -160,6 +162,7 @@ Rules:
 Return ONLY valid JSON."""
 
 
+# 使用 tiktoken 统计文本 token 数, 不可用时回退到字符估算
 def _count_tokens(text: str, encoding_name: str = "cl100k_base") -> int:
     """Count tokens in text using tiktoken.
 
@@ -182,6 +185,7 @@ def _count_tokens(text: str, encoding_name: str = "cl100k_base") -> int:
         return len(text) // 4
 
 
+# 将置信度值强制转换为 [0, 1] 范围内的有限浮点数
 def _coerce_confidence(value: Any, default: float = 0.0) -> float:
     """Coerce a confidence-like value to a bounded float in [0, 1].
 
@@ -198,6 +202,7 @@ def _coerce_confidence(value: Any, default: float = 0.0) -> float:
     return max(0.0, min(1.0, confidence))
 
 
+# 格式化记忆数据用于系统提示注入: 按置信度排序事实, 受 token 预算限制
 def format_memory_for_injection(memory_data: dict[str, Any], max_tokens: int = 2000) -> str:
     """Format memory data for injection into system prompt.
 
@@ -317,6 +322,7 @@ def format_memory_for_injection(memory_data: dict[str, Any], max_tokens: int = 2
     return result
 
 
+# 格式化对话消息用于记忆更新提示词: 去除上传标签, 截断长消息
 def format_conversation_for_update(messages: list[Any]) -> str:
     """Format conversation messages for memory update prompt.
 

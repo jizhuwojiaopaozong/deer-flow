@@ -1,3 +1,4 @@
+# 中文说明：所有渠道实现共享的命令定义模块
 """Shared command definitions used by all channel implementations.
 
 Keeping the authoritative command set in one place ensures that channel
@@ -8,6 +9,7 @@ required.
 
 from __future__ import annotations
 
+# 中文说明：所有渠道已知的命令集合，确保各渠道解析器和调度器保持同步
 KNOWN_CHANNEL_COMMANDS: frozenset[str] = frozenset(
     {
         "/bootstrap",

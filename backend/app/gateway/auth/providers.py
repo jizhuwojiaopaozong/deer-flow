@@ -1,8 +1,10 @@
+# 中文说明：认证提供者抽象基类，定义认证和用户查询的接口
 """Auth provider abstraction."""
 
 from abc import ABC, abstractmethod
 
 
+# 中文说明：认证提供者抽象基类
 class AuthProvider(ABC):
     """Abstract base class for authentication providers."""
 

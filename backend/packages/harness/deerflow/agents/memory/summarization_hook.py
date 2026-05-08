@@ -1,5 +1,7 @@
 """Hooks fired before summarization removes messages from state."""
 
+# 摘要钩子: 在摘要中间件移除消息前, 将待移除消息刷入记忆队列
+
 from __future__ import annotations
 
 from deerflow.agents.memory.message_processing import detect_correction, detect_reinforcement, filter_messages_for_memory
@@ -8,6 +10,7 @@ from deerflow.agents.middlewares.summarization_middleware import SummarizationEv
 from deerflow.config.memory_config import get_memory_config
 
 
+# 摘要前记忆刷新钩子: 将即将被摘要的消息过滤后立即提交到记忆队列
 def memory_flush_hook(event: SummarizationEvent) -> None:
     """Flush messages about to be summarized into the memory queue."""
     if not get_memory_config().enabled or not event.thread_id:

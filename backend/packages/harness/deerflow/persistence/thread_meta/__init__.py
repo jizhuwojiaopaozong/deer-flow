@@ -1,3 +1,4 @@
+# 中文说明：线程元数据持久化子包，包含抽象接口和 SQL/内存实现
 """Thread metadata persistence — ORM, abstract store, and concrete implementations."""
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ __all__ = [
 ]
 
 
+# 中文说明：根据可用后端创建合适的线程元数据存储实例
 def make_thread_store(
     session_factory: async_sessionmaker[AsyncSession] | None,
     store: BaseStore | None = None,

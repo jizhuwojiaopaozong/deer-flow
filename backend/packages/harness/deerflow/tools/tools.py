@@ -1,3 +1,4 @@
+# 工具加载与注册: 从配置、MCP、内置工具和 ACP 代理组装可用工具列表
 import logging
 
 from langchain.tools import BaseTool
@@ -22,6 +23,7 @@ SUBAGENT_TOOLS = [
 ]
 
 
+# 判断工具是否为主机 bash 执行工具: 用于安全检查
 def _is_host_bash_tool(tool: object) -> bool:
     """Return True if the tool config represents a host-bash execution surface."""
     group = getattr(tool, "group", None)
@@ -33,6 +35,7 @@ def _is_host_bash_tool(tool: object) -> bool:
     return False
 
 
+# 获取所有可用工具: 合并配置工具、内置工具、MCP 工具和 ACP 代理工具
 def get_available_tools(
     groups: list[str] | None = None,
     include_mcp: bool = True,

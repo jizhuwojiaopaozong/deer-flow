@@ -1,3 +1,4 @@
+# 中文说明：管理员密码重置 CLI 工具，生成新密码并写入受限凭证文件
 """CLI tool to reset an admin password.
 
 Usage:
@@ -24,6 +25,7 @@ from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 from deerflow.persistence.user.model import UserRow
 
 
+# 中文说明：执行密码重置的核心异步函数
 async def _run(email: str | None) -> int:
     from deerflow.config import get_app_config
     from deerflow.persistence.engine import (
@@ -78,6 +80,7 @@ async def _run(email: str | None) -> int:
         await close_engine()
 
 
+# 中文说明：CLI 入口函数，解析命令行参数并执行密码重置
 def main() -> None:
     parser = argparse.ArgumentParser(description="Reset admin password")
     parser.add_argument("--email", help="Admin email (default: first admin found)")

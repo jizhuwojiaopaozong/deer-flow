@@ -1,3 +1,4 @@
+# 中文说明：反馈端点，提供运行反馈的创建、列出、统计和删除功能
 """Feedback endpoints — create, list, stats, delete.
 
 Allows users to submit thumbs-up/down feedback on runs,
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/api/threads", tags=["feedback"])
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：反馈创建请求模型
 class FeedbackCreateRequest(BaseModel):
     rating: int = Field(..., description="Feedback rating: +1 (positive) or -1 (negative)")
     comment: str | None = Field(default=None, description="Optional text feedback")
@@ -35,6 +37,7 @@ class FeedbackUpsertRequest(BaseModel):
     comment: str | None = Field(default=None, description="Optional text feedback")
 
 
+# 中文说明：反馈响应模型
 class FeedbackResponse(BaseModel):
     feedback_id: str
     run_id: str
@@ -46,6 +49,7 @@ class FeedbackResponse(BaseModel):
     created_at: str = ""
 
 
+# 中文说明：反馈统计响应模型
 class FeedbackStatsResponse(BaseModel):
     run_id: str
     total: int = 0

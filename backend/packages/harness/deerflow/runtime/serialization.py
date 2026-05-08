@@ -1,3 +1,4 @@
+# 中文说明：LangChain/LangGraph 对象的标准序列化，提供统一的 JSON 转换入口
 """Canonical serialization for LangChain / LangGraph objects.
 
 Provides a single source of truth for converting LangChain message
@@ -13,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 
+# 中文说明：递归序列化 LangChain 对象为可 JSON 化的结构
 def serialize_lc_object(obj: Any) -> Any:
     """Recursively serialize a LangChain object to a JSON-serialisable dict."""
     if obj is None:
@@ -42,6 +44,7 @@ def serialize_lc_object(obj: Any) -> Any:
         return repr(obj)
 
 
+# 中文说明：序列化 channel 值，去除 LangGraph 内部键
 def serialize_channel_values(channel_values: dict[str, Any]) -> dict[str, Any]:
     """Serialize channel values, stripping internal LangGraph keys.
 
@@ -64,6 +67,7 @@ def serialize_messages_tuple(obj: Any) -> Any:
     return serialize_lc_object(obj)
 
 
+# 中文说明：根据模式序列化 LangChain 对象（messages/values/默认）
 def serialize(obj: Any, *, mode: str = "") -> Any:
     """Serialize LangChain objects with mode-specific handling.
 

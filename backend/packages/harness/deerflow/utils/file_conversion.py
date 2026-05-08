@@ -1,3 +1,4 @@
+# 中文说明：文件转换工具，将文档文件（PDF、PPT、Excel、Word）转换为 Markdown
 """File conversion utilities.
 
 Converts document files (PDF, PPT, Excel, Word) to Markdown.
@@ -135,6 +136,7 @@ def _do_convert(file_path: Path, pdf_converter: str) -> str:
     return _convert_with_markitdown(file_path)
 
 
+# 中文说明：将支持的文档文件转换为 Markdown，大文件自动在后台线程中处理
 async def convert_file_to_markdown(file_path: Path) -> Path | None:
     """Convert a supported document file to Markdown.
 
@@ -225,6 +227,7 @@ def _clean_bold_title(raw: str) -> str:
     return merged
 
 
+# 中文说明：从 Markdown 文件中提取文档大纲（标题列表）
 def extract_outline(md_path: Path) -> list[dict]:
     """Extract document outline (headings) from a Markdown file.
 

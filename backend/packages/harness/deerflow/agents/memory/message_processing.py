@@ -1,5 +1,7 @@
 """Shared helpers for turning conversations into memory update inputs."""
 
+# 消息处理工具: 过滤对话消息、检测纠正/强化信号
+
 from __future__ import annotations
 
 import re
@@ -37,6 +39,7 @@ _REINFORCEMENT_PATTERNS = (
 )
 
 
+# 从消息内容中提取纯文本 (支持字符串和内容块列表)
 def extract_message_text(message: Any) -> str:
     """Extract plain text from message content for filtering and signal detection."""
     content = getattr(message, "content", "")
@@ -53,6 +56,7 @@ def extract_message_text(message: Any) -> str:
     return str(content)
 
 
+# 过滤消息: 仅保留用户输入和最终助手响应, 去除上传文件标签
 def filter_messages_for_memory(messages: list[Any]) -> list[Any]:
     """Keep only user inputs and final assistant responses for memory updates."""
     filtered = []
@@ -85,6 +89,7 @@ def filter_messages_for_memory(messages: list[Any]) -> list[Any]:
     return filtered
 
 
+# 检测用户纠正信号: 匹配中英文纠正模式
 def detect_correction(messages: list[Any]) -> bool:
     """Detect explicit user corrections in recent conversation turns."""
     recent_user_msgs = [msg for msg in messages[-6:] if getattr(msg, "type", None) == "human"]
@@ -97,6 +102,7 @@ def detect_correction(messages: list[Any]) -> bool:
     return False
 
 
+# 检测用户正向强化信号: 匹配中英文确认/满意模式
 def detect_reinforcement(messages: list[Any]) -> bool:
     """Detect explicit positive reinforcement signals in recent conversation turns."""
     recent_user_msgs = [msg for msg in messages[-6:] if getattr(msg, "type", None) == "human"]

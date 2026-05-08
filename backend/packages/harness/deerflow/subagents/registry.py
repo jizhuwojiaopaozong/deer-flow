@@ -1,3 +1,5 @@
+# 中文说明：子代理注册表，管理内置和自定义子代理的配置解析与查询
+
 """Subagent registry for managing available subagents."""
 
 import logging
@@ -11,6 +13,7 @@ from deerflow.subagents.config import SubagentConfig
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：解析子代理的应用配置，支持显式传入或从全局配置获取
 def _resolve_subagents_app_config(app_config: Any | None = None):
     if app_config is None:
         from deerflow.config.subagents_config import get_subagents_app_config
@@ -19,6 +22,7 @@ def _resolve_subagents_app_config(app_config: Any | None = None):
     return getattr(app_config, "subagents", app_config)
 
 
+# 中文说明：从配置文件的 custom_agents 部分构建自定义子代理配置
 def _build_custom_subagent_config(name: str, *, app_config: Any | None = None) -> SubagentConfig | None:
     """Build a SubagentConfig from config.yaml custom_agents section.
 
@@ -47,6 +51,7 @@ def _build_custom_subagent_config(name: str, *, app_config: Any | None = None) -
     )
 
 
+# 中文说明：按名称获取子代理配置，支持内置、自定义和逐代理覆盖的分层解析
 def get_subagent_config(name: str, *, app_config: Any | None = None) -> SubagentConfig | None:
     """Get a subagent configuration by name, with config.yaml overrides applied.
 
@@ -116,6 +121,7 @@ def get_subagent_config(name: str, *, app_config: Any | None = None) -> Subagent
     return config
 
 
+# 中文说明：列出所有可用的子代理配置（含配置文件覆盖）
 def list_subagents(*, app_config: Any | None = None) -> list[SubagentConfig]:
     """List all available subagent configurations (with config.yaml overrides applied).
 
@@ -130,6 +136,7 @@ def list_subagents(*, app_config: Any | None = None) -> list[SubagentConfig]:
     return configs
 
 
+# 中文说明：获取所有可用子代理的名称列表（内置 + 自定义）
 def get_subagent_names(*, app_config: Any | None = None) -> list[str]:
     """Get all available subagent names (built-in + custom).
 
@@ -147,6 +154,7 @@ def get_subagent_names(*, app_config: Any | None = None) -> list[str]:
     return names
 
 
+# 中文说明：获取当前运行时可见的子代理名称，根据沙箱配置过滤
 def get_available_subagent_names(*, app_config: Any | None = None) -> list[str]:
     """Get subagent names that should be exposed to the active runtime.
 

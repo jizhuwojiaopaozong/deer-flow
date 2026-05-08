@@ -1,3 +1,4 @@
+# 中文说明：基于 SQLAlchemy 的 UserRepository 实现，使用共享异步会话工厂访问 users 表
 """SQLAlchemy-backed UserRepository implementation.
 
 Uses the shared async session factory from
@@ -24,6 +25,7 @@ from app.gateway.auth.repositories.base import UserNotFoundError, UserRepository
 from deerflow.persistence.user.model import UserRow
 
 
+# 中文说明：基于共享 SQLAlchemy 引擎的异步用户仓库实现
 class SQLiteUserRepository(UserRepository):
     """Async user repository backed by the shared SQLAlchemy engine."""
 
@@ -32,6 +34,7 @@ class SQLiteUserRepository(UserRepository):
 
     # ── Converters ────────────────────────────────────────────────────
 
+    # 中文说明：将数据库行转换为 User 模型
     @staticmethod
     def _row_to_user(row: UserRow) -> User:
         return User(
@@ -48,6 +51,7 @@ class SQLiteUserRepository(UserRepository):
             token_version=row.token_version,
         )
 
+    # 中文说明：将 User 模型转换为数据库行
     @staticmethod
     def _user_to_row(user: User) -> UserRow:
         return UserRow(
@@ -64,6 +68,7 @@ class SQLiteUserRepository(UserRepository):
 
     # ── CRUD ──────────────────────────────────────────────────────────
 
+    # 中文说明：插入新用户，邮箱重复时抛出 ValueError
     async def create_user(self, user: User) -> User:
         """Insert a new user. Raises ``ValueError`` on duplicate email."""
         row = self._user_to_row(user)

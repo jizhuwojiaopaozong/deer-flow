@@ -1,3 +1,4 @@
+# 中文说明：CSRF 防护中间件，使用双重提交 Cookie 模式保护状态变更请求
 """CSRF protection middleware for FastAPI.
 
 Per RFC-001:
@@ -19,16 +20,19 @@ CSRF_HEADER_NAME = "X-CSRF-Token"
 CSRF_TOKEN_LENGTH = 64  # bytes
 
 
+# 中文说明：检测原始客户端请求是否通过 HTTPS 发起
 def is_secure_request(request: Request) -> bool:
     """Detect whether the original client request was made over HTTPS."""
     return _request_scheme(request) == "https"
 
 
+# 中文说明：生成安全随机 CSRF 令牌
 def generate_csrf_token() -> str:
     """Generate a secure random CSRF token."""
     return secrets.token_urlsafe(CSRF_TOKEN_LENGTH)
 
 
+# 中文说明：判断请求是否需要 CSRF 校验（仅 POST/PUT/DELETE/PATCH 等状态变更方法）
 def should_check_csrf(request: Request) -> bool:
     """Determine if a request needs CSRF validation.
 
@@ -55,6 +59,7 @@ _AUTH_EXEMPT_PATHS: frozenset[str] = frozenset(
 )
 
 
+# 中文说明：检查请求是否指向认证端点（认证端点首次调用无需 CSRF 校验）
 def is_auth_endpoint(request: Request) -> bool:
     """Check if the request is to an auth endpoint.
 
@@ -145,6 +150,7 @@ def _request_origin(request: Request) -> str | None:
     return _normalize_origin(f"{scheme}://{host}")
 
 
+# 中文说明：校验认证 POST 请求的 Origin 头，仅允许同源或已配置的 CORS 来源
 def is_allowed_auth_origin(request: Request) -> bool:
     """Allow auth POSTs only from the same origin or explicit configured origins.
 
@@ -166,6 +172,7 @@ def is_allowed_auth_origin(request: Request) -> bool:
     return normalized_origin in _configured_cors_origins() or (request_origin is not None and normalized_origin == request_origin)
 
 
+# 中文说明：CSRF 中间件，实现双重提交 Cookie 模式的跨站请求伪造防护
 class CSRFMiddleware(BaseHTTPMiddleware):
     """Middleware that implements CSRF protection using Double Submit Cookie pattern."""
 
@@ -215,6 +222,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# 中文说明：从当前请求的 Cookie 中获取 CSRF 令牌
 def get_csrf_token(request: Request) -> str | None:
     """Get the CSRF token from the current request's cookies.
 

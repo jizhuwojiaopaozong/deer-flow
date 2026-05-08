@@ -1,8 +1,10 @@
+# 中文说明：自动线程标题生成配置
 """Configuration for automatic thread title generation."""
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：标题生成配置，控制标题长度、模型和提示词模板
 class TitleConfig(BaseModel):
     """Configuration for automatic thread title generation."""
 

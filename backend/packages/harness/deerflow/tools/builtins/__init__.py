@@ -1,3 +1,4 @@
+# 内置工具模块: 提供文件展示、澄清提问、代理管理等内置工具
 from .clarification_tool import ask_clarification_tool
 from .present_file_tool import present_file_tool
 from .setup_agent_tool import setup_agent

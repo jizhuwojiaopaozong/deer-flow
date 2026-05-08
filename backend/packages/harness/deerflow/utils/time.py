@@ -1,3 +1,4 @@
+# 中文说明：ISO 8601 时间戳工具，为 Gateway 和嵌入式运行时提供统一的时间格式
 """ISO 8601 timestamp helpers for the Gateway and embedded runtime.
 
 DeerFlow stores and serializes thread/run timestamps as ISO 8601 UTC
@@ -27,6 +28,7 @@ The 10-digit anchor avoids accidentally rewriting ISO years like
 """
 
 
+# 中文说明：返回当前 UTC 时间的 ISO 8601 字符串
 def now_iso() -> str:
     """Return the current UTC time as an ISO 8601 string.
 
@@ -35,6 +37,7 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
+# 中文说明：将存储的时间戳尽力转换为 ISO 8601 字符串，兼容旧版 unix 时间戳
 def coerce_iso(value: object) -> str:
     """Best-effort coerce a stored timestamp to an ISO 8601 string.
 

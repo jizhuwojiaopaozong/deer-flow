@@ -1,3 +1,4 @@
+# 中文说明：追踪回调工厂，为已启用的追踪提供商（LangSmith/Langfuse）构建回调实例
 from __future__ import annotations
 
 from typing import Any
@@ -29,6 +30,7 @@ def _create_langfuse_handler(config) -> Any:
     return LangfuseCallbackHandler(public_key=config.public_key)
 
 
+# 中文说明：为所有已启用的追踪提供商构建回调列表
 def build_tracing_callbacks() -> list[Any]:
     """Build callbacks for all explicitly enabled tracing providers."""
     validate_enabled_tracing_providers()

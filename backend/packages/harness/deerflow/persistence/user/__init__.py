@@ -1,3 +1,4 @@
+# 中文说明：用户存储子包，包含用户表 ORM 模型
 """User storage subpackage.
 
 Holds the ORM model for the ``users`` table. The concrete repository

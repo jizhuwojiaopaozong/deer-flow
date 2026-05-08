@@ -1,6 +1,8 @@
+# 中文说明：LLM 模型配置，定义模型名称、提供商、思维模式和视觉支持等参数
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# 中文说明：单个 LLM 模型的配置项，支持思维模式和视觉能力标记
 class ModelConfig(BaseModel):
     """Config section for a model"""
 

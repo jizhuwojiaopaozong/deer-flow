@@ -1,3 +1,4 @@
+# 中文说明：MCP (Model Context Protocol) 配置管理路由，提供 MCP 服务器配置的查询和更新
 import json
 import logging
 from pathlib import Path
@@ -31,6 +32,7 @@ class McpOAuthConfigResponse(BaseModel):
     extra_token_params: dict[str, str] = Field(default_factory=dict, description="Additional form params sent to token endpoint")
 
 
+# 中文说明：MCP 服务器配置响应模型，包含传输类型、命令、URL、OAuth 等字段
 class McpServerConfigResponse(BaseModel):
     """Response model for MCP server configuration."""
 
@@ -69,6 +71,7 @@ class McpConfigUpdateRequest(BaseModel):
     summary="Get MCP Configuration",
     description="Retrieve the current Model Context Protocol (MCP) server configurations.",
 )
+# 中文说明：获取当前 MCP 配置，返回所有已配置的 MCP 服务器
 async def get_mcp_configuration() -> McpConfigResponse:
     """Get the current MCP configuration.
 
@@ -101,6 +104,7 @@ async def get_mcp_configuration() -> McpConfigResponse:
     summary="Update MCP Configuration",
     description="Update Model Context Protocol (MCP) server configurations and save to file.",
 )
+# 中文说明：更新 MCP 配置，保存到文件并重新加载缓存
 async def update_mcp_configuration(request: McpConfigUpdateRequest) -> McpConfigResponse:
     """Update the MCP configuration.
 

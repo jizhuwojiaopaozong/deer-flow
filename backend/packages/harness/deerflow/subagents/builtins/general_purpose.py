@@ -1,3 +1,5 @@
+# 中文说明：通用子代理配置，适用于需要探索和执行的复杂多步骤任务
+
 """General-purpose subagent configuration."""
 
 from deerflow.subagents.config import SubagentConfig

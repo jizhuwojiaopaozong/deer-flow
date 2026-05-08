@@ -9,6 +9,8 @@ request.tools so that model.bind_tools only receives active tool schemas.
 The agent discovers deferred tools at runtime via the tool_search tool.
 """
 
+# 延迟工具过滤中间件: 隐藏延迟加载工具的 schema, 直到 tool_search 启用
+
 import logging
 from collections.abc import Awaitable, Callable
 from typing import override
@@ -23,6 +25,7 @@ from langgraph.types import Command
 logger = logging.getLogger(__name__)
 
 
+# 延迟工具过滤中间件: 从模型绑定中移除延迟加载工具的 schema
 class DeferredToolFilterMiddleware(AgentMiddleware[AgentState]):
     """Remove deferred tools from request.tools before model binding.
 

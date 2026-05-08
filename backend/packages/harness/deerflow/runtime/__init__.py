@@ -1,3 +1,4 @@
+# 中文说明：LangGraph 兼容运行时，提供运行管理、流式传输和生命周期管理
 """LangGraph-compatible runtime — runs, streaming, and lifecycle management.
 
 Re-exports the public API of :mod:`~deerflow.runtime.runs` and

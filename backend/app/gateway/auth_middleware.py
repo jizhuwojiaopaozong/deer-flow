@@ -1,3 +1,4 @@
+# 中文说明：全局认证中间件，对非公开路径执行 JWT 验证并将用户信息写入请求上下文
 """Global authentication middleware — fail-closed safety net.
 
 Rejects unauthenticated requests to non-public paths with 401. When a
@@ -42,6 +43,7 @@ _PUBLIC_EXACT_PATHS: frozenset[str] = frozenset(
 )
 
 
+# 中文说明：判断请求路径是否为公开路径（健康检查、文档、认证端点等）
 def _is_public(path: str) -> bool:
     stripped = path.rstrip("/")
     if stripped in _PUBLIC_EXACT_PATHS:
@@ -49,6 +51,7 @@ def _is_public(path: str) -> bool:
     return any(path.startswith(prefix) for prefix in _PUBLIC_PATH_PREFIXES)
 
 
+# 中文说明：严格认证网关中间件，拒绝未认证请求，支持内部令牌和 JWT Cookie 两种认证方式
 class AuthMiddleware(BaseHTTPMiddleware):
     """Strict auth gate: reject requests without a valid session.
 
@@ -72,6 +75,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp) -> None:
         super().__init__(app)
 
+    # 中文说明：中间件分发逻辑：公开路径放行，内部令牌放行，否则验证 Cookie JWT
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if _is_public(request.url.path):
             return await call_next(request)

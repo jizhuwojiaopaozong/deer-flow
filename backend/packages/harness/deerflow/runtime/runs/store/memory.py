@@ -1,3 +1,4 @@
+# 中文说明：内存运行存储，用于 database.backend=memory 模式和测试
 """In-memory RunStore. Used when database.backend=memory (default) and in tests.
 
 Equivalent to the original RunManager._runs dict behavior.
@@ -11,6 +12,7 @@ from typing import Any
 from deerflow.runtime.runs.store.base import RunStore
 
 
+# 中文说明：内存运行存储实现，使用字典存储运行数据
 class MemoryRunStore(RunStore):
     def __init__(self) -> None:
         self._runs: dict[str, dict[str, Any]] = {}

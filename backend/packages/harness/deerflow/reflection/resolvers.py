@@ -1,3 +1,4 @@
+# 中文说明：动态模块解析器，支持通过路径字符串加载变量和类，并提供缺失依赖的安装提示
 from importlib import import_module
 
 MODULE_TO_PACKAGE_HINTS = {
@@ -22,6 +23,7 @@ def _build_missing_dependency_hint(module_path: str, err: ImportError) -> str:
     return f"Missing dependency '{missing_module}'. Install it with `uv add {package_name}` (or `pip install {package_name}`), then restart DeerFlow."
 
 
+# 中文说明：从模块路径解析变量，支持类型验证和缺失依赖提示
 def resolve_variable[T](
     variable_path: str,
     expected_type: type[T] | tuple[type, ...] | None = None,
@@ -70,6 +72,7 @@ def resolve_variable[T](
     return variable
 
 
+# 中文说明：从模块路径解析类，支持基类验证
 def resolve_class[T](class_path: str, base_class: type[T] | None = None) -> type[T]:
     """Resolve a class from a module path and class name.
 

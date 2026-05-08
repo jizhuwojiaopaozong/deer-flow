@@ -1,3 +1,4 @@
+# 中文说明：技能档案安装逻辑，处理 ZIP 解压、安全扫描和安装流程
 """Shared skill archive installation logic.
 
 Pure business logic — no FastAPI/HTTP dependencies.
@@ -21,14 +22,17 @@ _PROMPT_INPUT_DIRS = {"references", "templates"}
 _PROMPT_INPUT_SUFFIXES = frozenset({".json", ".markdown", ".md", ".rst", ".txt", ".yaml", ".yml"})
 
 
+# 中文说明：技能已存在异常，当同名技能已安装时抛出
 class SkillAlreadyExistsError(ValueError):
     """Raised when a skill with the same name is already installed."""
 
 
+# 中文说明：技能安全扫描异常，当档案未通过安全检查时抛出
 class SkillSecurityScanError(ValueError):
     """Raised when a skill archive fails security scanning."""
 
 
+# 中文说明：检测 ZIP 成员路径是否包含绝对路径或目录穿越
 def is_unsafe_zip_member(info: zipfile.ZipInfo) -> bool:
     """Return True if the zip member path is absolute or attempts directory traversal."""
     name = info.filename
@@ -47,6 +51,7 @@ def is_unsafe_zip_member(info: zipfile.ZipInfo) -> bool:
     return False
 
 
+# 中文说明：检测 ZIP 成员是否为符号链接
 def is_symlink_member(info: zipfile.ZipInfo) -> bool:
     """Detect symlinks based on the external attributes stored in the ZipInfo."""
     mode = info.external_attr >> 16
@@ -77,6 +82,7 @@ def resolve_skill_dir_from_archive(temp_path: Path) -> Path:
     return temp_path
 
 
+# 中文说明：安全解压技能档案，包含路径遍历防护和大小限制
 def safe_extract_skill_archive(
     zip_ref: zipfile.ZipFile,
     dest_path: Path,

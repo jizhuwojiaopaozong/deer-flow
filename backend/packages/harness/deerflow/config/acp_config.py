@@ -1,3 +1,4 @@
+# 中文说明：ACP（代理客户端协议）代理配置，管理外部 ACP 兼容代理的启动参数
 """ACP (Agent Client Protocol) agent configuration loaded from config.yaml."""
 
 import logging
@@ -8,6 +9,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：单个 ACP 代理的配置，包含启动命令、环境变量和权限设置
 class ACPAgentConfig(BaseModel):
     """Configuration for a single ACP-compatible agent."""
 
@@ -29,6 +31,7 @@ class ACPAgentConfig(BaseModel):
 _acp_agents: dict[str, ACPAgentConfig] = {}
 
 
+# 中文说明：获取当前配置的 ACP 代理映射
 def get_acp_agents() -> dict[str, ACPAgentConfig]:
     """Get the currently configured ACP agents.
 

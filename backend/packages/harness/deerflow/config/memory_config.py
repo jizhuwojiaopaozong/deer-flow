@@ -1,8 +1,10 @@
+# 中文说明：记忆机制配置，控制记忆存储、注入和事实管理参数
 """Configuration for memory mechanism."""
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：全局记忆机制配置，包括启用开关、存储路径、防抖时间和事实上限
 class MemoryConfig(BaseModel):
     """Configuration for global memory mechanism."""
 
@@ -66,6 +68,7 @@ class MemoryConfig(BaseModel):
 _memory_config: MemoryConfig = MemoryConfig()
 
 
+# 中文说明：获取当前记忆配置的全局实例
 def get_memory_config() -> MemoryConfig:
     """Get the current memory configuration."""
     return _memory_config

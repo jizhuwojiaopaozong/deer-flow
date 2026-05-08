@@ -1,3 +1,4 @@
+# 中文说明：LangChain 消息到 OpenAI Chat Completions 格式的转换函数
 """Pure functions to convert LangChain message objects to OpenAI Chat Completions format.
 
 Utility for translating LangChain message types to OpenAI-compatible dicts.
@@ -18,6 +19,7 @@ _ROLE_MAP = {
 }
 
 
+# 中文说明：将单个 LangChain 消息转换为 OpenAI 消息字典
 def langchain_to_openai_message(message: Any) -> dict:
     """Convert a single LangChain BaseMessage to an OpenAI message dict.
 
@@ -88,6 +90,7 @@ def _infer_finish_reason(message: Any) -> str:
     return "stop"
 
 
+# 中文说明：将 AIMessage 转换为 OpenAI completion 响应字典
 def langchain_to_openai_completion(message: Any) -> dict:
     """Convert an AIMessage and its metadata to an OpenAI completion response dict.
 

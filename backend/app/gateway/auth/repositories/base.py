@@ -1,3 +1,4 @@
+# 中文说明：用户仓库抽象接口，定义用户数据存储的 CRUD 操作规范
 """User repository interface for abstracting database operations."""
 
 from abc import ABC, abstractmethod
@@ -5,6 +6,7 @@ from abc import ABC, abstractmethod
 from app.gateway.auth.models import User
 
 
+# 中文说明：用户未找到错误，当仓库操作目标不存在的行时抛出
 class UserNotFoundError(LookupError):
     """Raised when a user repository operation targets a non-existent row.
 
@@ -15,6 +17,7 @@ class UserNotFoundError(LookupError):
     """
 
 
+# 中文说明：用户数据存储的抽象接口，支持不同后端实现（如 SQLite）
 class UserRepository(ABC):
     """Abstract interface for user data storage.
 

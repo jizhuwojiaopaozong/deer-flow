@@ -1,3 +1,4 @@
+# 中文说明：运行事件存储配置，控制消息和执行跟踪的持久化方式
 """Run event storage configuration.
 
 Controls where run events (messages + execution traces) are persisted.
@@ -18,6 +19,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+# 中文说明：运行事件配置类，支持 memory/db/jsonl 三种存储后端
 class RunEventsConfig(BaseModel):
     backend: Literal["memory", "db", "jsonl"] = Field(
         default="memory",

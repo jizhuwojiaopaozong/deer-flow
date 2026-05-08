@@ -1,3 +1,4 @@
+# 中文说明：统一数据库后端配置，同时控制 LangGraph 检查点和应用持久化层
 """Unified database backend configuration.
 
 Controls BOTH the LangGraph checkpointer and the DeerFlow application
@@ -37,6 +38,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+# 中文说明：数据库配置类，支持 memory/sqlite/postgres 三种后端
 class DatabaseConfig(BaseModel):
     backend: Literal["memory", "sqlite", "postgres"] = Field(
         default="memory",

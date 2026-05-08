@@ -1,3 +1,4 @@
+# 中文说明：同步检查点工厂，提供单例和上下文管理器两种使用方式
 """Sync checkpointer factory.
 
 Provides a **sync singleton** and a **sync context manager** for LangGraph
@@ -100,6 +101,7 @@ _checkpointer: Checkpointer | None = None
 _checkpointer_ctx = None  # open context manager keeping the connection alive
 
 
+# 中文说明：获取全局同步检查点单例，首次调用时创建
 def get_checkpointer() -> Checkpointer:
     """Return the global sync checkpointer singleton, creating it on first call.
 
@@ -146,6 +148,7 @@ def get_checkpointer() -> Checkpointer:
     return _checkpointer
 
 
+# 中文说明：重置同步检查点单例，强制下次调用重新创建
 def reset_checkpointer() -> None:
     """Reset the sync singleton, forcing recreation on the next call.
 
@@ -168,6 +171,7 @@ def reset_checkpointer() -> None:
 
 
 @contextlib.contextmanager
+# 中文说明：同步上下文管理器，创建独立的检查点连接
 def checkpointer_context() -> Iterator[Checkpointer]:
     """Sync context manager that yields a checkpointer and cleans up on exit.
 

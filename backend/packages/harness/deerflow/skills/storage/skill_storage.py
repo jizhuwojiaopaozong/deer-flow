@@ -1,3 +1,4 @@
+# 中文说明：技能存储抽象基类，定义模板方法流程和存储接口
 """Abstract SkillStorage base class with template-method flows."""
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 _SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
+# 中文说明：技能存储抽象基类，子类实现具体的存储介质操作
 class SkillStorage(ABC):
     """Abstract base for skill storage backends.
 
@@ -32,6 +34,7 @@ class SkillStorage(ABC):
     # ------------------------------------------------------------------
 
     @staticmethod
+    # 中文说明：校验并规范化技能名称（小写字母、数字和连字符）
     def validate_skill_name(name: str) -> str:
         """Validate and normalise a skill name; return the normalised form."""
         normalized = name.strip()
@@ -209,6 +212,7 @@ class SkillStorage(ABC):
     # Final template-method flows
     # ------------------------------------------------------------------
 
+    # 中文说明：发现并加载所有技能，合并启用状态并排序
     def load_skills(self, *, enabled_only: bool = False) -> list[Skill]:
         """Discover all skills, merge enabled state, sort and optionally filter.
 

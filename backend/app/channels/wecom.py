@@ -1,3 +1,4 @@
+# 中文说明：企业微信渠道实现，通过 WebSocket 连接，支持流式消息和分片文件上传
 from __future__ import annotations
 
 import asyncio
@@ -18,6 +19,7 @@ from app.channels.message_bus import (
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：企业微信渠道类，使用 wecom-aibot-python-sdk WebSocket 连接，支持流式回复
 class WeComChannel(Channel):
     def __init__(self, bus: MessageBus, config: dict[str, Any]) -> None:
         super().__init__(name="wecom", bus=bus, config=config)
@@ -51,6 +53,7 @@ class WeComChannel(Channel):
         send_reply_async = cast(Callable[[str, dict[str, Any], str], Awaitable[dict[str, Any]]], send_reply)
         return await send_reply_async(req_id, body, cmd)
 
+    # 中文说明：启动企业微信渠道，初始化 WebSocket 客户端并注册消息处理器
     async def start(self) -> None:
         if self._running:
             return
@@ -103,6 +106,7 @@ class WeComChannel(Channel):
         self._ws_stream_ids.clear()
         logger.info("WeCom channel stopped")
 
+    # 中文说明：发送消息到企业微信，优先使用 WebSocket 流式回复
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         if self._ws_client:
             await self._send_ws(msg, _max_retries=_max_retries)
@@ -132,6 +136,7 @@ class WeComChannel(Channel):
         if msg.is_final:
             self._clear_ws_context(msg.thread_ts)
 
+    # 中文说明：通过 WebSocket 分片上传文件到企业微信
     async def send_file(self, msg: OutboundMessage, attachment: ResolvedAttachment) -> bool:
         if not msg.is_final:
             return True
@@ -172,6 +177,7 @@ class WeComChannel(Channel):
             logger.exception("[WeCom] failed to upload/send file via ws: %s", attachment.filename)
             return False
 
+    # 中文说明：处理 WebSocket 文本消息
     async def _on_ws_text(self, frame: dict[str, Any]) -> None:
         body = frame.get("body", {}) or {}
         text = ((body.get("text") or {}).get("content") or "").strip()
@@ -180,6 +186,7 @@ class WeComChannel(Channel):
             return
         await self._publish_ws_inbound(frame, text + (f"\nQuote message: {quote}" if quote else ""))
 
+    # 中文说明：处理 WebSocket 混合消息（文本+图片+文件）
     async def _on_ws_mixed(self, frame: dict[str, Any]) -> None:
         body = frame.get("body", {}) or {}
         mixed = body.get("mixed") or {}
@@ -211,6 +218,7 @@ class WeComChannel(Channel):
             text = "（receive image/file）"
         await self._publish_ws_inbound(frame, text, files=files)
 
+    # 中文说明：处理 WebSocket 图片消息
     async def _on_ws_image(self, frame: dict[str, Any]) -> None:
         body = frame.get("body", {}) or {}
         image = body.get("image") or {}
@@ -230,6 +238,7 @@ class WeComChannel(Channel):
             ],
         )
 
+    # 中文说明：处理 WebSocket 文件消息
     async def _on_ws_file(self, frame: dict[str, Any]) -> None:
         body = frame.get("body", {}) or {}
         file_obj = body.get("file") or {}
@@ -249,6 +258,7 @@ class WeComChannel(Channel):
             ],
         )
 
+    # 中文说明：将 WebSocket 消息发布到消息总线，同时发送流式工作提示
     async def _publish_ws_inbound(
         self,
         frame: dict[str, Any],

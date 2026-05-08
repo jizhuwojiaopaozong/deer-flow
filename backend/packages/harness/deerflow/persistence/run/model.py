@@ -1,3 +1,4 @@
+# 中文说明：运行元数据 ORM 模型，存储运行状态、token 用量等信息
 """ORM model for run metadata."""
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from deerflow.persistence.base import Base
 
 
+# 中文说明：运行记录表，存储每次运行的完整生命周期数据
 class RunRow(Base):
     __tablename__ = "runs"
 

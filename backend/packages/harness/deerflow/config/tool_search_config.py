@@ -1,8 +1,10 @@
+# 中文说明：延迟工具加载配置，通过 tool_search 在运行时动态发现 MCP 工具
 """Configuration for deferred tool loading via tool_search."""
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：工具搜索配置类，启用后 MCP 工具不直接加载到代理上下文中
 class ToolSearchConfig(BaseModel):
     """Configuration for deferred tool loading via tool_search.
 

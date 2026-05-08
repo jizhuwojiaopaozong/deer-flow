@@ -1,3 +1,4 @@
+# 中文说明：助手兼容性端点，提供 LangGraph Platform 兼容的助手 API（最小存根实现）
 """Assistants compatibility endpoints.
 
 Provides LangGraph Platform-compatible assistants API backed by the
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/assistants", tags=["assistants-compat"])
 
 
+# 中文说明：助手响应模型
 class AssistantResponse(BaseModel):
     assistant_id: str
     graph_id: str
@@ -40,6 +42,7 @@ class AssistantSearchRequest(BaseModel):
     offset: int = 0
 
 
+# 中文说明：返回默认的 lead_agent 助手
 def _get_default_assistant() -> AssistantResponse:
     """Return the default lead_agent assistant."""
     now = datetime.now(UTC).isoformat()
@@ -56,6 +59,7 @@ def _get_default_assistant() -> AssistantResponse:
     )
 
 
+# 中文说明：列出所有可用助手（lead_agent + 自定义智能体）
 def _list_assistants() -> list[AssistantResponse]:
     """List all available assistants from config."""
     assistants = [_get_default_assistant()]
@@ -86,6 +90,7 @@ def _list_assistants() -> list[AssistantResponse]:
 
 
 @router.post("/search", response_model=list[AssistantResponse])
+# 中文说明：搜索助手，支持按 graph_id 和名称过滤
 async def search_assistants(body: AssistantSearchRequest | None = None) -> list[AssistantResponse]:
     """Search assistants.
 
@@ -104,6 +109,7 @@ async def search_assistants(body: AssistantSearchRequest | None = None) -> list[
 
 
 @router.get("/{assistant_id}", response_model=AssistantResponse)
+# 中文说明：根据 ID 获取助手详情
 async def get_assistant_compat(assistant_id: str) -> AssistantResponse:
     """Get an assistant by ID."""
     for a in _list_assistants():

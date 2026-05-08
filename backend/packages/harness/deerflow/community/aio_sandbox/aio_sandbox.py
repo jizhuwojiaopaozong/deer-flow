@@ -1,3 +1,4 @@
+# 中文说明：AIO 沙箱实现，通过 HTTP API 连接 Docker 容器执行命令和文件操作
 import base64
 import logging
 import shlex
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 _ERROR_OBSERVATION_SIGNATURE = "'ErrorObservation' object has no attribute 'exit_code'"
 
 
+# 中文说明：基于 agent-infra/sandbox Docker 容器的沙箱实现，使用线程锁串行化命令执行
 class AioSandbox(Sandbox):
     """Sandbox implementation using the agent-infra/sandbox Docker container.
 
@@ -54,6 +56,7 @@ class AioSandbox(Sandbox):
     # default.
     _DEFAULT_NO_CHANGE_TIMEOUT = 600
 
+    # 中文说明：在沙箱中执行 shell 命令，使用锁防止并发请求破坏会话
     def execute_command(self, command: str) -> str:
         """Execute a shell command in the sandbox.
 
@@ -86,6 +89,7 @@ class AioSandbox(Sandbox):
                 logger.error(f"Failed to execute command in sandbox: {e}")
                 return f"Error: {e}"
 
+    # 中文说明：读取沙箱中指定路径的文件内容
     def read_file(self, path: str) -> str:
         """Read the content of a file in the sandbox.
 
@@ -123,6 +127,7 @@ class AioSandbox(Sandbox):
                 logger.error(f"Failed to list directory in sandbox: {e}")
                 return []
 
+    # 中文说明：向沙箱中指定路径写入文件内容
     def write_file(self, path: str, content: str, append: bool = False) -> None:
         """Write content to a file in the sandbox.
 

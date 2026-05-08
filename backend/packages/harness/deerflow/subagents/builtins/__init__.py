@@ -1,3 +1,5 @@
+# 中文说明：内置子代理配置包，注册通用型和Bash命令执行两个内置子代理
+
 """Built-in subagent configurations."""
 
 from .bash_agent import BASH_AGENT_CONFIG

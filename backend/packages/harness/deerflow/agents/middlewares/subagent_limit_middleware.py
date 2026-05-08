@@ -1,5 +1,7 @@
 """Middleware to enforce maximum concurrent subagent tool calls per model response."""
 
+# 子代理限制中间件: 截断超出 MAX_CONCURRENT_SUBAGENTS 限制的 task 工具调用
+
 import logging
 from typing import override
 
@@ -7,7 +9,6 @@ from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langgraph.runtime import Runtime
 
-from deerflow.agents.middlewares.tool_call_metadata import clone_ai_message_with_tool_calls
 from deerflow.subagents.executor import MAX_CONCURRENT_SUBAGENTS
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ def _clamp_subagent_limit(value: int) -> int:
     return max(MIN_SUBAGENT_LIMIT, min(MAX_SUBAGENT_LIMIT, value))
 
 
+# 子代理限制中间件: 在 after_model 中截断超出并发限制的 task 工具调用
 class SubagentLimitMiddleware(AgentMiddleware[AgentState]):
     """Truncates excess 'task' tool calls from a single model response.
 
@@ -64,7 +66,7 @@ class SubagentLimitMiddleware(AgentMiddleware[AgentState]):
         logger.warning(f"Truncated {dropped_count} excess task tool call(s) from model response (limit: {self.max_concurrent})")
 
         # Replace the AIMessage with truncated tool_calls (same id triggers replacement)
-        updated_msg = clone_ai_message_with_tool_calls(last_msg, truncated_tool_calls)
+        updated_msg = last_msg.model_copy(update={"tool_calls": truncated_tool_calls})
         return {"messages": [updated_msg]}
 
     @override

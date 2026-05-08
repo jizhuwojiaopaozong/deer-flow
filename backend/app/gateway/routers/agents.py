@@ -1,3 +1,4 @@
+# 中文说明：自定义智能体 CRUD API，提供智能体的创建、查询、更新、删除以及用户档案管理
 """CRUD API for custom agents."""
 
 import logging
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api", tags=["agents"])
 AGENT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
 
 
+# 中文说明：自定义智能体响应模型
 class AgentResponse(BaseModel):
     """Response model for a custom agent."""
 
@@ -36,6 +38,7 @@ class AgentsListResponse(BaseModel):
     agents: list[AgentResponse]
 
 
+# 中文说明：创建自定义智能体的请求体
 class AgentCreateRequest(BaseModel):
     """Request body for creating a custom agent."""
 
@@ -47,6 +50,7 @@ class AgentCreateRequest(BaseModel):
     soul: str = Field(default="", description="SOUL.md content — agent personality and behavioral guardrails")
 
 
+# 中文说明：更新自定义智能体的请求体
 class AgentUpdateRequest(BaseModel):
     """Request body for updating a custom agent."""
 
@@ -342,6 +346,7 @@ async def update_agent(name: str, request: AgentUpdateRequest) -> AgentResponse:
         raise HTTPException(status_code=500, detail=f"Failed to update agent: {str(e)}")
 
 
+# 中文说明：全局用户档案（USER.md）响应模型
 class UserProfileResponse(BaseModel):
     """Response model for the global user profile (USER.md)."""
 

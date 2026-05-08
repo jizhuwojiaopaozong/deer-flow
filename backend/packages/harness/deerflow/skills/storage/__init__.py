@@ -1,3 +1,4 @@
+# 中文说明：技能存储子包，提供单例工厂和存储实现
 """SkillStorage singleton + reflection-based factory.
 
 Mirrors the pattern used by ``deerflow/sandbox/sandbox_provider.py``.
@@ -12,6 +13,7 @@ _default_skill_storage: SkillStorage | None = None
 _default_skill_storage_config: object | None = None  # AppConfig identity the singleton was built from
 
 
+# 中文说明：获取或创建技能存储实例，支持单例和按需创建两种模式
 def get_or_new_skill_storage(**kwargs) -> SkillStorage:
     """Return a ``SkillStorage`` instance — either a new one or the process singleton.
 
@@ -68,6 +70,7 @@ def get_or_new_skill_storage(**kwargs) -> SkillStorage:
     return _default_skill_storage
 
 
+# 中文说明：清除缓存的技能存储单例，用于测试和热重载
 def reset_skill_storage() -> None:
     """Clear the cached singleton (used in tests and hot-reload scenarios)."""
     global _default_skill_storage, _default_skill_storage_config

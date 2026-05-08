@@ -1,3 +1,4 @@
+# 中文说明：流桥接子包，解耦代理工作线程与 SSE 端点
 """Stream bridge — decouples agent workers from SSE endpoints.
 
 A ``StreamBridge`` sits between the background task that runs an agent

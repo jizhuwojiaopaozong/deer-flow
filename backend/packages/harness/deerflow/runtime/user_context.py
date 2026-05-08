@@ -1,3 +1,4 @@
+# 中文说明：请求级用户上下文，通过 ContextVar 实现用户授权和隔离
 """Request-scoped user context for user-based authorization.
 
 This module holds a :class:`~contextvars.ContextVar` that the gateway's
@@ -39,6 +40,7 @@ from typing import Final, Protocol, runtime_checkable
 
 
 @runtime_checkable
+# 中文说明：当前认证用户的结构化类型协议
 class CurrentUser(Protocol):
     """Structural type for the current authenticated user.
 
@@ -52,6 +54,7 @@ class CurrentUser(Protocol):
 _current_user: Final[ContextVar[CurrentUser | None]] = ContextVar("deerflow_current_user", default=None)
 
 
+# 中文说明：设置当前异步任务的用户上下文
 def set_current_user(user: CurrentUser) -> Token[CurrentUser | None]:
     """Set the current user for this async task.
 
@@ -97,6 +100,7 @@ def require_current_user() -> CurrentUser:
 DEFAULT_USER_ID: Final[str] = "default"
 
 
+# 中文说明：获取当前用户 ID，未设置时返回默认值
 def get_effective_user_id() -> str:
     """Return the current user's id as a string, or DEFAULT_USER_ID if unset.
 
@@ -118,6 +122,7 @@ def get_effective_user_id() -> str:
 # behaviours; see the docstring on :func:`resolve_user_id`.
 
 
+# 中文说明：自动哨兵标记，表示从上下文变量解析 user_id
 class _AutoSentinel:
     """Singleton marker meaning 'resolve user_id from contextvar'."""
 
@@ -135,6 +140,7 @@ class _AutoSentinel:
 AUTO: Final[_AutoSentinel] = _AutoSentinel()
 
 
+# 中文说明：解析仓库方法的 user_id 参数，支持三态语义
 def resolve_user_id(
     value: str | None | _AutoSentinel,
     *,

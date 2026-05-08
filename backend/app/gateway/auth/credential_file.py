@@ -1,3 +1,4 @@
+# 中文说明：将初始管理员凭证写入受限文件（0600 权限）而非日志，防止密钥泄露
 """Write initial admin credentials to a restricted file instead of logs.
 
 Logging secrets to stdout/stderr is a well-known CodeQL finding
@@ -18,6 +19,7 @@ from deerflow.config.paths import get_paths
 _CREDENTIAL_FILENAME = "admin_initial_credentials.txt"
 
 
+# 中文说明：将管理员邮箱和密码原子性地写入 0600 权限的凭证文件
 def write_initial_credentials(email: str, password: str, *, label: str = "initial") -> Path:
     """Write the admin email + password to ``{base_dir}/admin_initial_credentials.txt``.
 

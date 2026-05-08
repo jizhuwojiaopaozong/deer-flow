@@ -1,3 +1,5 @@
+# 中文说明：聊天模型工厂模块，根据配置创建LLM实例，支持思考模式、视觉和流式使用量统计
+
 import logging
 
 from langchain.chat_models import BaseChatModel
@@ -10,6 +12,7 @@ from deerflow.tracing import build_tracing_callbacks
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：递归合并两个字典，不修改原始输入
 def _deep_merge_dicts(base: dict | None, override: dict) -> dict:
     """Recursively merge two dictionaries without mutating the inputs."""
     merged = dict(base or {})
@@ -21,6 +24,7 @@ def _deep_merge_dicts(base: dict | None, override: dict) -> dict:
     return merged
 
 
+# 中文说明：构建vLLM/Qwen禁用思考模式的chat_template_kwargs参数
 def _vllm_disable_chat_template_kwargs(chat_template_kwargs: dict) -> dict:
     """Build the disable payload for vLLM/Qwen chat template kwargs."""
     disable_kwargs: dict[str, bool] = {}
@@ -31,6 +35,7 @@ def _vllm_disable_chat_template_kwargs(chat_template_kwargs: dict) -> dict:
     return disable_kwargs
 
 
+# 中文说明：为OpenAI兼容模型默认启用stream_usage，确保token使用量可被追踪
 def _enable_stream_usage_by_default(model_use_path: str, model_settings_from_config: dict) -> None:
     """Enable stream usage for OpenAI-compatible models unless explicitly configured.
 
@@ -47,6 +52,7 @@ def _enable_stream_usage_by_default(model_use_path: str, model_settings_from_con
         model_settings_from_config["stream_usage"] = True
 
 
+# 中文说明：根据配置创建聊天模型实例，处理思考模式开关、vLLM/Codex/MindIE特殊逻辑
 def create_chat_model(name: str | None = None, thinking_enabled: bool = False, *, app_config: AppConfig | None = None, **kwargs) -> BaseChatModel:
     """Create a chat model instance from the config.
 

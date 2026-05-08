@@ -1,5 +1,7 @@
 """Memory updater for reading, writing, and updating memory data."""
 
+# 记忆更新器: 通过 LLM 从对话中提取事实和上下文, 原子写入持久化存储
+
 import asyncio
 import atexit
 import concurrent.futures
@@ -38,26 +40,31 @@ _SYNC_MEMORY_UPDATER_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
 atexit.register(lambda: _SYNC_MEMORY_UPDATER_EXECUTOR.shutdown(wait=False))
 
 
+# 创建空记忆结构 (向后兼容包装)
 def _create_empty_memory() -> dict[str, Any]:
     """Backward-compatible wrapper around the storage-layer empty-memory factory."""
     return create_empty_memory()
 
 
+# 保存记忆数据到文件 (向后兼容包装)
 def _save_memory_to_file(memory_data: dict[str, Any], agent_name: str | None = None, *, user_id: str | None = None) -> bool:
     """Backward-compatible wrapper around the configured memory storage save path."""
     return get_memory_storage().save(memory_data, agent_name, user_id=user_id)
 
 
+# 获取当前记忆数据
 def get_memory_data(agent_name: str | None = None, *, user_id: str | None = None) -> dict[str, Any]:
     """Get the current memory data via storage provider."""
     return get_memory_storage().load(agent_name, user_id=user_id)
 
 
+# 强制重新加载记忆数据
 def reload_memory_data(agent_name: str | None = None, *, user_id: str | None = None) -> dict[str, Any]:
     """Reload memory data via storage provider."""
     return get_memory_storage().reload(agent_name, user_id=user_id)
 
 
+# 导入记忆数据并持久化
 def import_memory_data(memory_data: dict[str, Any], agent_name: str | None = None, *, user_id: str | None = None) -> dict[str, Any]:
     """Persist imported memory data via storage provider.
 
@@ -78,6 +85,7 @@ def import_memory_data(memory_data: dict[str, Any], agent_name: str | None = Non
     return storage.load(agent_name, user_id=user_id)
 
 
+# 清除所有记忆数据并持久化空结构
 def clear_memory_data(agent_name: str | None = None, *, user_id: str | None = None) -> dict[str, Any]:
     """Clear all stored memory data and persist an empty structure."""
     cleared_memory = create_empty_memory()
@@ -86,6 +94,7 @@ def clear_memory_data(agent_name: str | None = None, *, user_id: str | None = No
     return cleared_memory
 
 
+# 校验置信度值: 确保在 [0, 1] 范围内且为有限数
 def _validate_confidence(confidence: float) -> float:
     """Validate persisted fact confidence so stored JSON stays standards-compliant."""
     if not math.isfinite(confidence) or confidence < 0 or confidence > 1:
@@ -93,6 +102,7 @@ def _validate_confidence(confidence: float) -> float:
     return confidence
 
 
+# 创建新事实并持久化
 def create_memory_fact(
     content: str,
     category: str = "context",
@@ -130,6 +140,7 @@ def create_memory_fact(
     return updated_memory
 
 
+# 按 ID 删除事实并持久化
 def delete_memory_fact(fact_id: str, agent_name: str | None = None, *, user_id: str | None = None) -> dict[str, Any]:
     """Delete a fact by its id and persist the updated memory data."""
     memory_data = get_memory_data(agent_name, user_id=user_id)
@@ -147,6 +158,7 @@ def delete_memory_fact(fact_id: str, agent_name: str | None = None, *, user_id: 
     return updated_memory
 
 
+# 更新已有事实并持久化
 def update_memory_fact(
     fact_id: str,
     content: str | None = None,
@@ -190,6 +202,7 @@ def update_memory_fact(
     return updated_memory
 
 
+# 从 LLM 响应内容中提取纯文本 (支持字符串和内容块列表)
 def _extract_text(content: Any) -> str:
     """Extract plain text from LLM response content (str or list of content blocks).
 
@@ -241,6 +254,7 @@ _UPLOAD_SENTENCE_RE = re.compile(
 )
 
 
+# 从记忆中移除文件上传相关的句子 (上传文件是会话级别的, 不应持久化)
 def _strip_upload_mentions_from_memory(memory_data: dict[str, Any]) -> dict[str, Any]:
     """Remove sentences about file uploads from all memory summaries and facts.
 
@@ -264,6 +278,7 @@ def _strip_upload_mentions_from_memory(memory_data: dict[str, Any]) -> dict[str,
     return memory_data
 
 
+# 生成事实内容的去重键 (strip + casefold)
 def _fact_content_key(content: Any) -> str | None:
     if not isinstance(content, str):
         return None
@@ -273,6 +288,7 @@ def _fact_content_key(content: Any) -> str | None:
     return stripped.casefold()
 
 
+# 记忆更新器: 使用 LLM 从对话上下文中提取和更新记忆
 class MemoryUpdater:
     """Updates memory using LLM based on conversation context."""
 
@@ -284,12 +300,14 @@ class MemoryUpdater:
         """
         self._model_name = model_name
 
+    # 获取用于记忆更新的 LLM 模型
     def _get_model(self):
         """Get the model for memory updates."""
         config = get_memory_config()
         model_name = self._model_name or config.model_name
         return create_chat_model(name=model_name, thinking_enabled=False)
 
+    # 构建纠正和强化信号的提示词
     def _build_correction_hint(
         self,
         correction_detected: bool,
@@ -315,6 +333,7 @@ class MemoryUpdater:
 
         return correction_hint
 
+    # 加载记忆并构建更新提示词
     def _prepare_update_prompt(
         self,
         messages: list[Any],
@@ -344,6 +363,7 @@ class MemoryUpdater:
         )
         return current_memory, prompt
 
+    # 解析 LLM 响应, 应用更新, 持久化记忆
     def _finalize_update(
         self,
         current_memory: dict[str, Any],
@@ -366,6 +386,7 @@ class MemoryUpdater:
         updated_memory = _strip_upload_mentions_from_memory(updated_memory)
         return get_memory_storage().save(updated_memory, agent_name, user_id=user_id)
 
+    # 异步更新记忆: 委托给同步路径, 使用 asyncio.to_thread 避免跨事件循环问题
     async def aupdate_memory(
         self,
         messages: list[Any],
@@ -393,6 +414,7 @@ class MemoryUpdater:
             user_id=user_id,
         )
 
+    # 纯同步记忆更新: 使用 model.invoke() 避免创建事件循环
     def _do_update_memory_sync(
         self,
         messages: list[Any],
@@ -438,6 +460,7 @@ class MemoryUpdater:
             logger.exception("Memory update failed: %s", e)
             return False
 
+    # 同步更新记忆: 在事件循环中运行时自动卸载到线程池
     def update_memory(
         self,
         messages: list[Any],
@@ -499,6 +522,7 @@ class MemoryUpdater:
             user_id=user_id,
         )
 
+    # 应用 LLM 生成的更新到记忆: 更新用户上下文、历史、添加/删除事实
     def _apply_updates(
         self,
         current_memory: dict[str, Any],
@@ -586,6 +610,7 @@ class MemoryUpdater:
         return current_memory
 
 
+# 便捷函数: 从对话更新记忆
 def update_memory_from_conversation(
     messages: list[Any],
     thread_id: str | None = None,

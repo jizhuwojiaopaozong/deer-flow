@@ -1,3 +1,4 @@
+# 中文说明：运行事件存储抽象接口，统一消息和跟踪事件的存取
 """Abstract interface for run event storage.
 
 RunEventStore is the unified storage interface for run event streams.
@@ -14,6 +15,7 @@ from __future__ import annotations
 import abc
 
 
+# 中文说明：运行事件流存储接口，保证 seq 严格递增和事件可检索
 class RunEventStore(abc.ABC):
     """Run event stream storage interface.
 

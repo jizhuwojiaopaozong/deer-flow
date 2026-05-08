@@ -1,3 +1,4 @@
+# 中文说明：异步流桥接工厂，提供异步上下文管理器创建 StreamBridge 实例
 """Async stream bridge factory.
 
 Provides an **async context manager** aligned with
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.asynccontextmanager
+# 中文说明：异步创建流桥接实例，默认使用内存实现
 async def make_stream_bridge(app_config: AppConfig | None = None) -> AsyncIterator[StreamBridge]:
     """Async context manager that yields a :class:`StreamBridge`.
 

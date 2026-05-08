@@ -1,3 +1,4 @@
+# 中文说明：运行事件 ORM 模型，存储消息、跟踪和生命周期事件
 """ORM model for run events."""
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from deerflow.persistence.base import Base
 
 
+# 中文说明：运行事件表，按 thread_id 和 seq 保证事件顺序
 class RunEventRow(Base):
     __tablename__ = "run_events"
 

@@ -1,3 +1,4 @@
+# 中文说明：飞书/Lark 渠道实现，通过 WebSocket 连接（无需公网 IP）
 """Feishu/Lark channel — connects to Feishu via WebSocket (no public IP needed)."""
 
 from __future__ import annotations
@@ -19,12 +20,14 @@ from deerflow.sandbox.sandbox_provider import get_sandbox_provider
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：判断文本是否为飞书已知命令
 def _is_feishu_command(text: str) -> bool:
     if not text.startswith("/"):
         return False
     return text.split(maxsplit=1)[0].lower() in KNOWN_CHANNEL_COMMANDS
 
 
+# 中文说明：飞书 IM 渠道类，使用 lark-oapi WebSocket 客户端，支持流式卡片消息
 class FeishuChannel(Channel):
     """Feishu/Lark IM channel using the ``lark-oapi`` WebSocket client.
 
@@ -67,6 +70,7 @@ class FeishuChannel(Channel):
     def supports_streaming(self) -> bool:
         return True
 
+    # 中文说明：启动飞书渠道，初始化 API 客户端和 WebSocket 连接
     async def start(self) -> None:
         if self._running:
             return
@@ -136,6 +140,7 @@ class FeishuChannel(Channel):
         self._thread.start()
         logger.info("Feishu channel started")
 
+    # 中文说明：在独立线程中构建并运行飞书 WebSocket 客户端
     def _run_ws(self, app_id: str, app_secret: str, domain: str) -> None:
         """Construct and run the lark WS client in a thread with a fresh event loop.
 
@@ -187,6 +192,7 @@ class FeishuChannel(Channel):
             self._thread = None
         logger.info("Feishu channel stopped")
 
+    # 中文说明：发送消息到飞书，支持卡片消息和重试机制
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         if not self._api_client:
             logger.warning("[Feishu] send called but no api_client available")
@@ -287,6 +293,7 @@ class FeishuChannel(Channel):
             raise RuntimeError(f"Feishu file upload failed: code={response.code}, msg={response.msg}")
         return response.data.file_key
 
+    # 中文说明：下载飞书文件到线程上传目录，并替换消息文本中的文件引用
     async def receive_file(self, msg: InboundMessage, thread_id: str) -> InboundMessage:
         """Download a Feishu file into the thread uploads directory.
 
@@ -396,6 +403,7 @@ class FeishuChannel(Channel):
 
     # -- message formatting ------------------------------------------------
 
+    # 中文说明：构建飞书交互式卡片内容，支持 Markdown 渲染
     @staticmethod
     def _build_card_content(text: str) -> str:
         """Build a Feishu interactive card with markdown content.
@@ -582,6 +590,7 @@ class FeishuChannel(Channel):
         self._ensure_running_card_started(msg_id)
         await self.bus.publish_inbound(inbound)
 
+    # 中文说明：飞书消息接收回调，在 lark 线程中运行，解析消息并发布到总线
     def _on_message(self, event) -> None:
         """Called by lark-oapi when a message is received (runs in lark thread)."""
         try:

@@ -1,3 +1,5 @@
+# 中文说明：MCP工具加载模块，通过langchain-mcp-adapters从所有已启用的MCP服务器获取工具
+
 """Load MCP tools using langchain-mcp-adapters."""
 
 import asyncio
@@ -23,6 +25,7 @@ _SYNC_TOOL_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=10, thre
 atexit.register(lambda: _SYNC_TOOL_EXECUTOR.shutdown(wait=False))
 
 
+# 中文说明：为异步工具创建同步包装器，处理嵌套事件循环问题
 def _make_sync_tool_wrapper(coro: Callable[..., Any], tool_name: str) -> Callable[..., Any]:
     """Build a synchronous wrapper for an asynchronous tool coroutine.
 
@@ -54,6 +57,7 @@ def _make_sync_tool_wrapper(coro: Callable[..., Any], tool_name: str) -> Callabl
     return sync_wrapper
 
 
+# 中文说明：从所有已启用的MCP服务器获取工具列表，支持OAuth和自定义拦截器
 async def get_mcp_tools() -> list[BaseTool]:
     """Get all tools from enabled MCP servers.
 

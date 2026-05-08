@@ -1,3 +1,4 @@
+# 中文说明：自定义代理配置和加载器，支持每用户隔离的代理管理
 """Configuration and loaders for custom agents.
 
 Custom agents are stored per-user under ``{base_dir}/users/{user_id}/agents/{name}/``.
@@ -35,6 +36,7 @@ def validate_agent_name(name: str | None) -> str | None:
     return name
 
 
+# 中文说明：自定义代理配置，包含名称、描述、模型、工具组和技能设置
 class AgentConfig(BaseModel):
     """Configuration for a custom agent."""
 
@@ -49,6 +51,7 @@ class AgentConfig(BaseModel):
     skills: list[str] | None = None
 
 
+# 中文说明：解析代理目录，优先使用每用户布局，回退到旧版共享布局
 def resolve_agent_dir(name: str, *, user_id: str | None = None) -> Path:
     """Return the on-disk directory for an agent, preferring the per-user layout.
 
@@ -77,6 +80,7 @@ def resolve_agent_dir(name: str, *, user_id: str | None = None) -> Path:
     return user_path
 
 
+# 中文说明：加载代理的 config.yaml 配置文件
 def load_agent_config(name: str | None, *, user_id: str | None = None) -> AgentConfig | None:
     """Load the custom or default agent's config from its directory.
 
@@ -126,6 +130,7 @@ def load_agent_config(name: str | None, *, user_id: str | None = None) -> AgentC
     return AgentConfig(**data)
 
 
+# 中文说明：读取代理的 SOUL.md 文件，定义代理的人格和行为准则
 def load_agent_soul(agent_name: str | None, *, user_id: str | None = None) -> str | None:
     """Read the SOUL.md file for a custom agent, if it exists.
 
@@ -151,6 +156,7 @@ def load_agent_soul(agent_name: str | None, *, user_id: str | None = None) -> st
     return content or None
 
 
+# 中文说明：扫描代理目录，返回所有有效的自定义代理列表
 def list_custom_agents(*, user_id: str | None = None) -> list[AgentConfig]:
     """Scan the agents directory and return all valid custom agents.
 

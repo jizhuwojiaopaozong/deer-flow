@@ -1,3 +1,4 @@
+# 中文说明：线程 CRUD、状态和历史端点，提供线程的创建、搜索、状态读写、历史查询和删除功能
 """Thread CRUD, state, and history endpoints.
 
 Combines the existing thread-local filesystem cleanup with LangGraph
@@ -53,6 +54,7 @@ def _strip_reserved_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：线程删除响应模型
 class ThreadDeleteResponse(BaseModel):
     """Response model for thread cleanup."""
 
@@ -60,6 +62,7 @@ class ThreadDeleteResponse(BaseModel):
     message: str
 
 
+# 中文说明：单个线程的响应模型
 class ThreadResponse(BaseModel):
     """Response model for a single thread."""
 
@@ -72,6 +75,7 @@ class ThreadResponse(BaseModel):
     interrupts: dict[str, Any] = Field(default_factory=dict, description="Pending interrupts")
 
 
+# 中文说明：创建线程的请求体
 class ThreadCreateRequest(BaseModel):
     """Request body for creating a thread."""
 
@@ -82,6 +86,7 @@ class ThreadCreateRequest(BaseModel):
     _strip_reserved = field_validator("metadata")(classmethod(lambda cls, v: _strip_reserved_metadata(v)))
 
 
+# 中文说明：搜索线程的请求体
 class ThreadSearchRequest(BaseModel):
     """Request body for searching threads."""
 
@@ -91,6 +96,7 @@ class ThreadSearchRequest(BaseModel):
     status: str | None = Field(default=None, description="Filter by thread status")
 
 
+# 中文说明：线程状态响应模型
 class ThreadStateResponse(BaseModel):
     """Response model for thread state."""
 
@@ -104,6 +110,7 @@ class ThreadStateResponse(BaseModel):
     tasks: list[dict[str, Any]] = Field(default_factory=list, description="Interrupted task details")
 
 
+# 中文说明：线程元数据补丁请求体
 class ThreadPatchRequest(BaseModel):
     """Request body for patching thread metadata."""
 
@@ -112,6 +119,7 @@ class ThreadPatchRequest(BaseModel):
     _strip_reserved = field_validator("metadata")(classmethod(lambda cls, v: _strip_reserved_metadata(v)))
 
 
+# 中文说明：线程状态更新请求体（用于人机交互恢复等场景）
 class ThreadStateUpdateRequest(BaseModel):
     """Request body for updating thread state (human-in-the-loop resume)."""
 
@@ -121,6 +129,7 @@ class ThreadStateUpdateRequest(BaseModel):
     as_node: str | None = Field(default=None, description="Node identity for the update")
 
 
+# 中文说明：单条检查点历史记录
 class HistoryEntry(BaseModel):
     """Single checkpoint history entry."""
 
@@ -144,6 +153,7 @@ class ThreadHistoryRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：删除线程的本地持久化文件系统数据
 def _delete_thread_data(thread_id: str, paths: Paths | None = None, *, user_id: str | None = None) -> ThreadDeleteResponse:
     """Delete local persisted filesystem data for a thread."""
     path_manager = paths or get_paths()
@@ -163,6 +173,7 @@ def _delete_thread_data(thread_id: str, paths: Paths | None = None, *, user_id: 
     return ThreadDeleteResponse(success=True, message=f"Deleted local thread data for {thread_id}")
 
 
+# 中文说明：从检查点元数据推导线程状态（idle/interrupted/error）
 def _derive_thread_status(checkpoint_tuple) -> str:
     """Derive thread status from checkpoint metadata."""
     if checkpoint_tuple is None:
@@ -189,6 +200,7 @@ def _derive_thread_status(checkpoint_tuple) -> str:
 
 @router.delete("/{thread_id}", response_model=ThreadDeleteResponse)
 @require_permission("threads", "delete", owner_check=True, require_existing=True)
+# 中文说明：删除线程的本地文件系统数据、检查点和元数据记录
 async def delete_thread_data(thread_id: str, request: Request) -> ThreadDeleteResponse:
     """Delete local persisted filesystem data for a thread.
 
@@ -222,6 +234,7 @@ async def delete_thread_data(thread_id: str, request: Request) -> ThreadDeleteRe
 
 
 @router.post("", response_model=ThreadResponse)
+# 中文说明：创建新线程，写入线程元数据和空检查点，支持幂等操作
 async def create_thread(body: ThreadCreateRequest, request: Request) -> ThreadResponse:
     """Create a new thread.
 
@@ -287,6 +300,7 @@ async def create_thread(body: ThreadCreateRequest, request: Request) -> ThreadRe
 
 
 @router.post("/search", response_model=list[ThreadResponse])
+# 中文说明：搜索和列出线程，支持元数据过滤、状态筛选和分页
 async def search_threads(body: ThreadSearchRequest, request: Request) -> list[ThreadResponse]:
     """Search and list threads.
 
@@ -350,6 +364,7 @@ async def patch_thread(thread_id: str, body: ThreadPatchRequest, request: Reques
 
 @router.get("/{thread_id}", response_model=ThreadResponse)
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：获取线程信息，从元数据存储和检查点综合推导状态
 async def get_thread(thread_id: str, request: Request) -> ThreadResponse:
     """Get thread info.
 
@@ -408,6 +423,7 @@ async def get_thread(thread_id: str, request: Request) -> ThreadResponse:
 # ---------------------------------------------------------------------------
 @router.get("/{thread_id}/state", response_model=ThreadStateResponse)
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：获取线程的最新状态快照
 async def get_thread_state(thread_id: str, request: Request) -> ThreadStateResponse:
     """Get the latest state snapshot for a thread.
 
@@ -460,6 +476,7 @@ async def get_thread_state(thread_id: str, request: Request) -> ThreadStateRespo
 
 @router.post("/{thread_id}/state", response_model=ThreadStateResponse)
 @require_permission("threads", "write", owner_check=True, require_existing=True)
+# 中文说明：更新线程状态（如人机交互恢复、标题重命名），写入新检查点
 async def update_thread_state(thread_id: str, body: ThreadStateUpdateRequest, request: Request) -> ThreadStateResponse:
     """Update thread state (e.g. for human-in-the-loop resume or title rename).
 
@@ -550,6 +567,7 @@ async def update_thread_state(thread_id: str, body: ThreadStateUpdateRequest, re
 
 @router.post("/{thread_id}/history", response_model=list[HistoryEntry])
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：获取线程的检查点历史记录
 async def get_thread_history(thread_id: str, body: ThreadHistoryRequest, request: Request) -> list[HistoryEntry]:
     """Get checkpoint history for a thread.
 

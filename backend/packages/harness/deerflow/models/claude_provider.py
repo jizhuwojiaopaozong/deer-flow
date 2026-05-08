@@ -1,3 +1,5 @@
+# 中文说明：自定义Claude模型提供者，支持OAuth认证、提示缓存和智能思考预算分配
+
 """Custom Claude provider with OAuth Bearer auth, prompt caching, and smart thinking.
 
 Supports two authentication modes:
@@ -41,6 +43,7 @@ _DEFAULT_BILLING_HEADER = "x-anthropic-billing-header: cc_version=2.1.85.351; cc
 OAUTH_BILLING_HEADER = os.environ.get("ANTHROPIC_BILLING_HEADER", _DEFAULT_BILLING_HEADER)
 
 
+# 中文说明：ChatAnthropic扩展类，集成OAuth认证、提示缓存和自动思考预算分配
 class ClaudeChatModel(ChatAnthropic):
     """ChatAnthropic with OAuth Bearer auth, prompt caching, and smart thinking.
 

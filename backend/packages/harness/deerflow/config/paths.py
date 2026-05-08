@@ -1,3 +1,4 @@
+# 中文说明：路径配置模块，管理 DeerFlow 应用数据的目录结构和虚拟路径映射
 import os
 import re
 import shutil
@@ -59,6 +60,7 @@ def join_host_path(base: str, *parts: str) -> str:
     return _join_host_path(base, *parts)
 
 
+# 中文说明：集中式路径配置类，管理基础目录、线程目录、用户目录和沙箱目录
 class Paths:
     """
     Centralized path configuration for DeerFlow application data.
@@ -330,6 +332,7 @@ class Paths:
 _paths: Paths | None = None
 
 
+# 中文说明：返回全局 Paths 单例（惰性初始化）
 def get_paths() -> Paths:
     """Return the global Paths singleton (lazy-initialized)."""
     global _paths

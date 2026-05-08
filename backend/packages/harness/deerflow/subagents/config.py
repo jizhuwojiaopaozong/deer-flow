@@ -1,3 +1,5 @@
+# 中文说明：子代理配置定义模块，包含子代理的数据模型和模型名称解析逻辑
+
 """Subagent configuration definitions."""
 
 from dataclasses import dataclass, field
@@ -7,6 +9,7 @@ if TYPE_CHECKING:
     from deerflow.config.app_config import AppConfig
 
 
+# 中文说明：子代理配置数据类，定义名称、描述、系统提示词、工具列表、模型等参数
 @dataclass
 class SubagentConfig:
     """Configuration for a subagent.
@@ -35,12 +38,14 @@ class SubagentConfig:
     timeout_seconds: int = 900
 
 
+# 中文说明：获取默认模型名称，从应用配置中返回第一个模型的名称
 def _default_model_name(app_config: "AppConfig") -> str:
     if not app_config.models:
         raise ValueError("No chat models are configured. Please configure at least one model in config.yaml.")
     return app_config.models[0].name
 
 
+# 中文说明：解析子代理实际使用的模型名称，支持继承父代理模型或使用配置指定的模型
 def resolve_subagent_model_name(config: SubagentConfig, parent_model: str | None, *, app_config: "AppConfig | None" = None) -> str:
     """Resolve the effective model name a subagent should use."""
     if config.model != "inherit":

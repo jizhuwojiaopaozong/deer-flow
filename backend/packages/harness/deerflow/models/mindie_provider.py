@@ -1,3 +1,4 @@
+# 中文说明：MindIE引擎适配器，处理XML工具调用解析、多模态内容展平和流式兼容性问题
 import ast
 import html
 import json
@@ -11,6 +12,7 @@ from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_openai import ChatOpenAI
 
 
+# 中文说明：为MindIE兼容性清理消息，展平多模态内容并转换工具相关消息格式
 def _fix_messages(messages: list) -> list:
     """Sanitize incoming messages for MindIE compatibility.
 
@@ -58,6 +60,7 @@ def _fix_messages(messages: list) -> list:
     return fixed
 
 
+# 中文说明：解析模型输出中的XML格式工具调用为LangChain标准字典格式
 def _parse_xml_tool_call_to_dict(content: str) -> tuple[str, list[dict]]:
     """Parse XML-style tool calls from model output into LangChain dicts.
 
@@ -120,6 +123,7 @@ def _parse_xml_tool_call_to_dict(content: str) -> tuple[str, list[dict]]:
     return "".join(clean_parts).strip(), tool_calls
 
 
+# 中文说明：迭代解析嵌套的<tool_call> XML块
 def _iter_tool_call_blocks(content: str) -> Iterator[tuple[int, int, str]]:
     """Iterate `<tool_call>...</tool_call>` blocks and tolerate nesting."""
     token_pattern = re.compile(r"</?tool_call>")
@@ -159,6 +163,7 @@ def _decode_escaped_newlines_outside_fences(content: str) -> str:
     return "".join(parts)
 
 
+# 中文说明：MindIE聊天模型适配器，处理XML工具调用、转义换行符和流式兼容性
 class MindIEChatModel(ChatOpenAI):
     """Chat model adapter for MindIE engine.
 

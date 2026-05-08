@@ -1,3 +1,4 @@
+# 中文说明：基于 SQLAlchemy 的线程元数据仓库实现
 """SQLAlchemy-backed thread metadata repository."""
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from deerflow.persistence.thread_meta.model import ThreadMetaRow
 from deerflow.runtime.user_context import AUTO, _AutoSentinel, resolve_user_id
 
 
+# 中文说明：SQL 线程元数据仓库，实现 ThreadMetaStore 接口
 class ThreadMetaRepository(ThreadMetaStore):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory

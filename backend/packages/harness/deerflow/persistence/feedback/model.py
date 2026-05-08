@@ -1,3 +1,4 @@
+# 中文说明：用户反馈 ORM 模型，存储对运行结果的评分和评论
 """ORM model for user feedback on runs."""
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from deerflow.persistence.base import Base
 
 
+# 中文说明：反馈记录表，每条反馈关联一次运行和一个用户
 class FeedbackRow(Base):
     __tablename__ = "feedback"
 

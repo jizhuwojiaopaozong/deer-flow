@@ -1,3 +1,4 @@
+# 中文说明：本地容器沙箱后端，使用 Docker 或 Apple Container 管理容器生命周期
 """Local container backend for sandbox provisioning.
 
 Manages sandbox containers using Docker or Apple Container on the local machine.
@@ -169,6 +170,7 @@ def _resolve_docker_bind_host(sandbox_host: str | None = None, bind_host: str | 
     return "0.0.0.0"
 
 
+# 中文说明：本地容器后端，自动检测 Docker 或 Apple Container，支持端口分配和跨进程容器发现
 class LocalContainerBackend(SandboxBackend):
     """Backend that manages sandbox containers locally using Docker or Apple Container.
 

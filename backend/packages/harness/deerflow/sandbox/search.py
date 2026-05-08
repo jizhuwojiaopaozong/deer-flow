@@ -1,3 +1,5 @@
+# 沙盒搜索模块: 提供 glob 和 grep 文件搜索功能, 支持忽略规则和二进制文件检测
+
 import fnmatch
 import os
 import re
@@ -61,6 +63,7 @@ DEFAULT_LINE_SUMMARY_LENGTH = 200
 
 
 @dataclass(frozen=True)
+# Grep 匹配结果: 包含文件路径、行号、行内容
 class GrepMatch:
     path: str
     line_number: int
@@ -102,6 +105,7 @@ def is_binary_file(path: Path, sample_size: int = 8192) -> bool:
         return True
 
 
+# glob 模式搜索: 递归匹配文件路径, 支持最大结果限制和忽略规则
 def find_glob_matches(root: Path, pattern: str, *, include_dirs: bool = False, max_results: int = 200) -> tuple[list[str], bool]:
     matches: list[str] = []
     truncated = False
@@ -140,6 +144,7 @@ def find_glob_matches(root: Path, pattern: str, *, include_dirs: bool = False, m
     return matches, truncated
 
 
+# grep 搜索: 在文件内容中匹配正则表达式, 支持上下文行和二进制文件跳过
 def find_grep_matches(
     root: Path,
     pattern: str,

@@ -1,5 +1,7 @@
 """Middleware to inject uploaded files information into agent context."""
 
+# 上传文件中间件: 跟踪新上传的文件, 自动注入 <uploaded_files> 标签到对话上下文
+
 import logging
 from pathlib import Path
 from typing import NotRequired, override
@@ -63,6 +65,7 @@ class UploadsMiddlewareState(AgentState):
     uploaded_files: NotRequired[list[dict] | None]
 
 
+# 上传文件中间件: 检测新上传文件, 提取文档大纲, 注入文件列表到对话上下文
 class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
     """Middleware to inject uploaded files information into the agent context.
 

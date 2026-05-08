@@ -1,3 +1,4 @@
+# 中文说明：Gateway 依赖注入模块，集中管理 app.state 上的单例对象访问器和 LangGraph 运行时初始化
 """Centralized accessors for singleton objects stored on ``app.state``.
 
 **Getters** (used by routers): raise 503 when a required dependency is
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
+# 中文说明：从请求中获取全局应用配置，未初始化时返回 503
 def get_config(request: Request) -> AppConfig:
     """Return the app-scoped ``AppConfig`` stored on ``app.state``."""
     config = getattr(request.app.state, "config", None)
@@ -38,6 +40,7 @@ def get_config(request: Request) -> AppConfig:
     return config
 
 
+# 中文说明：引导并销毁所有 LangGraph 运行时单例（StreamBridge、RunManager、Checkpointer、Store 等）
 @asynccontextmanager
 async def langgraph_runtime(app: FastAPI) -> AsyncGenerator[None, None]:
     """Bootstrap and tear down all LangGraph runtime singletons.
@@ -102,6 +105,7 @@ async def langgraph_runtime(app: FastAPI) -> AsyncGenerator[None, None]:
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：工厂函数，生成从 app.state 获取指定属性的 FastAPI 依赖项（缺失时返回 503）
 def _require(attr: str, label: str) -> Callable[[Request], T]:
     """Create a FastAPI dependency that returns ``app.state.<attr>`` or 503."""
 
@@ -123,11 +127,13 @@ get_feedback_repo: Callable[[Request], FeedbackRepository] = _require("feedback_
 get_run_store: Callable[[Request], RunStore] = _require("run_store", "Run store")
 
 
+# 中文说明：获取全局 LangGraph Store（可能为 None）
 def get_store(request: Request):
     """Return the global store (may be ``None`` if not configured)."""
     return getattr(request.app.state, "store", None)
 
 
+# 中文说明：获取线程元数据存储（SQL 或内存后端）
 def get_thread_store(request: Request) -> ThreadMetaStore:
     """Return the thread metadata store (SQL or memory-backed)."""
     val = getattr(request.app.state, "thread_store", None)
@@ -136,6 +142,7 @@ def get_thread_store(request: Request) -> ThreadMetaStore:
     return val
 
 
+# 中文说明：从 app.state 单例构建 RunContext，包含检查点、存储、事件存储等基础设施依赖
 def get_run_context(request: Request) -> RunContext:
     """Build a :class:`RunContext` from ``app.state`` singletons.
 
@@ -161,6 +168,7 @@ _cached_local_provider: LocalAuthProvider | None = None
 _cached_repo: SQLiteUserRepository | None = None
 
 
+# 中文说明：获取或创建缓存的本地认证提供者单例（需在 init_engine_from_config 之后调用）
 def get_local_provider() -> LocalAuthProvider:
     """Get or create the cached LocalAuthProvider singleton.
 
@@ -183,6 +191,7 @@ def get_local_provider() -> LocalAuthProvider:
     return _cached_local_provider
 
 
+# 中文说明：从请求 Cookie 中解析 JWT 并获取当前认证用户，未认证时抛出 401
 async def get_current_user_from_request(request: Request):
     """Get the current authenticated user from the request cookie.
 
@@ -223,6 +232,7 @@ async def get_current_user_from_request(request: Request):
     return user
 
 
+# 中文说明：可选地获取当前认证用户，未认证时返回 None（不抛异常）
 async def get_optional_user_from_request(request: Request):
     """Get optional authenticated user from request.
 
@@ -234,6 +244,7 @@ async def get_optional_user_from_request(request: Request):
         return None
 
 
+# 中文说明：从请求中提取用户 ID 字符串，未认证时返回 None
 async def get_current_user(request: Request) -> str | None:
     """Extract user_id from request cookie, or None if not authenticated.
 

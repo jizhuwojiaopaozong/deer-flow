@@ -1,3 +1,4 @@
+# 中文说明：DeerFlow 嵌入式 Python 客户端，无需 HTTP 服务即可直接访问代理系统的全部能力
 """DeerFlowClient — Embedded Python client for DeerFlow agent system.
 
 Provides direct programmatic access to DeerFlow's agent capabilities
@@ -60,6 +61,7 @@ StreamEventType = Literal["values", "messages-tuple", "custom", "end"]
 
 
 @dataclass
+# 中文说明：流式事件数据类，包含事件类型和载荷，与 LangGraph SSE 协议对齐
 class StreamEvent:
     """A single event from the streaming agent response.
 
@@ -77,6 +79,7 @@ class StreamEvent:
     data: dict[str, Any] = field(default_factory=dict)
 
 
+# 中文说明：DeerFlow 嵌入式客户端类，提供对话、配置查询、技能管理和文件上传等功能
 class DeerFlowClient:
     """Embedded Python client for DeerFlow agent system.
 
@@ -486,6 +489,7 @@ class DeerFlowClient:
     # Public API — conversation
     # ------------------------------------------------------------------
 
+    # 中文说明：流式对话，逐事件返回代理响应（支持 values/messages/custom/end 四种事件类型）
     def stream(
         self,
         message: str,
@@ -759,6 +763,7 @@ class DeerFlowClient:
 
         yield StreamEvent(type="end", data={"usage": cumulative_usage})
 
+    # 中文说明：同步对话，返回最终的 AI 文本响应
     def chat(self, message: str, *, thread_id: str | None = None, **kwargs) -> str:
         """Send a message and return the final text response.
 
@@ -795,6 +800,7 @@ class DeerFlowClient:
     # Public API — configuration queries
     # ------------------------------------------------------------------
 
+    # 中文说明：列出配置中的可用模型
     def list_models(self) -> dict:
         """List available models from configuration.
 
@@ -821,6 +827,7 @@ class DeerFlowClient:
             "token_usage": {"enabled": token_usage_enabled},
         }
 
+    # 中文说明：列出可用技能
     def list_skills(self, enabled_only: bool = False) -> dict:
         """List available skills.
 
@@ -1110,6 +1117,7 @@ class DeerFlowClient:
     # Public API — file uploads
     # ------------------------------------------------------------------
 
+    # 中文说明：上传本地文件到线程的上传目录，支持文档自动转换为 Markdown
     def upload_files(self, thread_id: str, files: list[str | Path]) -> dict:
         """Upload local files into a thread's uploads directory.
 
@@ -1247,6 +1255,7 @@ class DeerFlowClient:
     # Public API — artifacts
     # ------------------------------------------------------------------
 
+    # 中文说明：读取代理生成的制品文件，返回文件字节和 MIME 类型
     def get_artifact(self, thread_id: str, path: str) -> tuple[bytes, str]:
         """Read an artifact file produced by the agent.
 

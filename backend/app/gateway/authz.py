@@ -1,3 +1,4 @@
+# 中文说明：授权装饰器和上下文模块，提供 require_auth 和 require_permission 装饰器实现权限控制
 """Authorization decorators and context for DeerFlow.
 
 Inspired by LangGraph Auth system: https://github.com/langchain-ai/langgraph/blob/main/libs/sdk-py/langgraph_sdk/auth/__init__.py
@@ -44,7 +45,7 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-# Permission constants
+# 中文说明：权限常量定义，采用 resource:action 格式
 class Permissions:
     """Permission constants for resource:action format."""
 
@@ -59,6 +60,7 @@ class Permissions:
     RUNS_CANCEL = "runs:cancel"
 
 
+# 中文说明：当前请求的认证上下文，存储用户信息和权限列表
 class AuthContext:
     """Authentication context for the current request.
 
@@ -104,6 +106,7 @@ class AuthContext:
         return self.user
 
 
+# 中文说明：从请求状态中获取 AuthContext
 def get_auth_context(request: Request) -> AuthContext | None:
     """Get AuthContext from request state."""
     return getattr(request.state, "auth", None)
@@ -128,6 +131,7 @@ def _make_test_request_stub() -> Any:
     return SimpleNamespace(state=SimpleNamespace(), cookies={}, _deerflow_test_bypass_auth=True)
 
 
+# 中文说明：认证请求并返回 AuthContext，委托给 deps 的 JWT 解析管道
 async def _authenticate(request: Request) -> AuthContext:
     """Authenticate request and return AuthContext.
 
@@ -144,6 +148,7 @@ async def _authenticate(request: Request) -> AuthContext:
     return AuthContext(user=user, permissions=_ALL_PERMISSIONS)
 
 
+# 中文说明：认证装饰器，独立验证请求是否已认证，未认证时抛出 401
 def require_auth[**P, T](func: Callable[P, T]) -> Callable[P, T]:
     """Decorator that authenticates the request and enforces authentication.
 
@@ -194,6 +199,7 @@ def require_auth[**P, T](func: Callable[P, T]) -> Callable[P, T]:
     return wrapper
 
 
+# 中文说明：权限检查装饰器，验证用户对指定资源的操作权限，支持所有权检查
 def require_permission(
     resource: str,
     action: str,

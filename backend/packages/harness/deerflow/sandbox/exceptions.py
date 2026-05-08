@@ -1,5 +1,7 @@
 """Sandbox-related exceptions with structured error information."""
 
+# 沙盒异常类: 包含 SandboxError 基类及 NotFound, Runtime, Command, File, Permission 子类
+
 
 class SandboxError(Exception):
     """Base exception for all sandbox-related errors."""

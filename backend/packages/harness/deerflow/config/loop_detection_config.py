@@ -1,8 +1,10 @@
+# 中文说明：循环检测中间件配置，防止代理陷入重复工具调用的死循环
 """Configuration for loop detection middleware."""
 
 from pydantic import BaseModel, Field, model_validator
 
 
+# 中文说明：单个工具的频率阈值覆盖，可针对高频工具调高限制
 class ToolFreqOverride(BaseModel):
     """Per-tool frequency threshold override.
 
@@ -21,6 +23,7 @@ class ToolFreqOverride(BaseModel):
         return self
 
 
+# 中文说明：循环检测配置，包括重复工具调用和单工具频率的警告/硬限制阈值
 class LoopDetectionConfig(BaseModel):
     """Configuration for repetitive tool-call loop detection."""
 

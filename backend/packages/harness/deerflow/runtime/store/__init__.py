@@ -1,3 +1,4 @@
+# 中文说明：DeerFlow 运行时存储子包，提供同步和异步存储工厂
 """Store provider for the DeerFlow runtime.
 
 Re-exports the public API of both the async provider (for long-running

@@ -1,3 +1,4 @@
+# 本地沙盒提供者: 管理本地沙盒实例的生命周期, 配置路径映射
 import logging
 from pathlib import Path
 
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 _singleton: LocalSandbox | None = None
 
 
+# 本地沙盒提供者类: 使用单例模式管理沙盒实例, 支持技能目录和自定义挂载
 class LocalSandboxProvider(SandboxProvider):
     uses_thread_data_mounts = True
 
@@ -17,6 +19,7 @@ class LocalSandboxProvider(SandboxProvider):
         """Initialize the local sandbox provider with path mappings."""
         self._path_mappings = self._setup_path_mappings()
 
+    # 设置路径映射: 映射技能目录和配置中的自定义挂载点
     def _setup_path_mappings(self) -> list[PathMapping]:
         """
         Setup path mappings for local sandbox.
@@ -99,12 +102,14 @@ class LocalSandboxProvider(SandboxProvider):
 
         return mappings
 
+    # 获取沙盒实例: 使用单例模式, 首次调用时创建实例
     def acquire(self, thread_id: str | None = None) -> str:
         global _singleton
         if _singleton is None:
             _singleton = LocalSandbox("local", path_mappings=self._path_mappings)
         return _singleton.id
 
+    # 获取已注册的沙盒: 通过 ID 返回单例实例
     def get(self, sandbox_id: str) -> Sandbox | None:
         if sandbox_id == "local":
             if _singleton is None:
@@ -112,6 +117,7 @@ class LocalSandboxProvider(SandboxProvider):
             return _singleton
         return None
 
+    # 释放沙盒: 本地沙盒使用单例模式, 无需实际清理
     def release(self, sandbox_id: str) -> None:
         # LocalSandbox uses singleton pattern - no cleanup needed.
         # Note: This method is intentionally not called by SandboxMiddleware

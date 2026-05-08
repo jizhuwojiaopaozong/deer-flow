@@ -1,3 +1,4 @@
+# 代理更新工具: 让自定义代理持久化更新自身的 SOUL.md 和 config.yaml
 """update_agent tool — let a custom agent persist updates to its own SOUL.md / config.
 
 Bound to the lead agent only when ``runtime.context['agent_name']`` is set
@@ -22,17 +23,18 @@ from typing import Any
 import yaml
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
+from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 
 from deerflow.config.agents_config import load_agent_config, validate_agent_name
 from deerflow.config.app_config import get_app_config
 from deerflow.config.paths import get_paths
 from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.tools.types import Runtime
 
 logger = logging.getLogger(__name__)
 
 
+# 写入临时文件: 先写入临时文件, 确保原子性替换
 def _stage_temp(path: Path, text: str) -> Path:
     """Write ``text`` into a sibling temp file and return its path.
 
@@ -58,6 +60,7 @@ def _stage_temp(path: Path, text: str) -> Path:
         raise
 
 
+# 清理临时文件: 最佳努力删除, 失败不影响主流程
 def _cleanup_temps(temps: list[Path]) -> None:
     """Best-effort removal of staged temp files."""
     for tmp in temps:
@@ -67,9 +70,10 @@ def _cleanup_temps(temps: list[Path]) -> None:
             logger.debug("Failed to clean up temp file %s", tmp, exc_info=True)
 
 
+# 更新自定义代理: 支持增量更新描述、技能、工具组、模型和 SOUL 内容
 @tool
 def update_agent(
-    runtime: Runtime,
+    runtime: ToolRuntime,
     soul: str | None = None,
     description: str | None = None,
     skills: list[str] | None = None,

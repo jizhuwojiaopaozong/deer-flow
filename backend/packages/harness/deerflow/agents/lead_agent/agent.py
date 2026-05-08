@@ -1,3 +1,5 @@
+# Lead Agent 工厂模块: 负责创建和配置主代理 (LangGraph 图), 包括模型选择、工具组装、中间件链构建
+
 import logging
 
 from langchain.agents import create_agent
@@ -26,6 +28,7 @@ from deerflow.skills.types import Skill
 logger = logging.getLogger(__name__)
 
 
+# 合并运行时配置: 将 LangGraph 的 configurable 选项与 context 合并为统一字典
 def _get_runtime_config(config: RunnableConfig) -> dict:
     """Merge legacy configurable options with LangGraph runtime context."""
     cfg = dict(config.get("configurable", {}) or {})
@@ -35,6 +38,7 @@ def _get_runtime_config(config: RunnableConfig) -> dict:
     return cfg
 
 
+# 解析模型名称: 请求值 -> agent 配置 -> 全局默认, 未知名称自动回退到默认模型
 def _resolve_model_name(requested_model_name: str | None = None, *, app_config: AppConfig | None = None) -> str:
     """Resolve a runtime model name safely, falling back to default if invalid. Returns None if no models are configured."""
     app_config = app_config or get_app_config()
@@ -50,6 +54,7 @@ def _resolve_model_name(requested_model_name: str | None = None, *, app_config: 
     return default_model_name
 
 
+# 创建上下文摘要中间件: 当对话接近 token 限制时自动压缩历史消息
 def _create_summarization_middleware(*, app_config: AppConfig | None = None) -> DeerFlowSummarizationMiddleware | None:
     """Create and configure the summarization middleware from config."""
     resolved_app_config = app_config or get_app_config()
@@ -112,6 +117,7 @@ def _create_summarization_middleware(*, app_config: AppConfig | None = None) -> 
     )
 
 
+# 创建计划模式 TodoList 中间件: 提供 write_todos 工具用于多步骤任务跟踪
 def _create_todo_list_middleware(is_plan_mode: bool) -> TodoMiddleware | None:
     """Create and configure the TodoList middleware.
 
@@ -237,6 +243,7 @@ Being proactive with task management demonstrates thoroughness and ensures all r
 # ViewImageMiddleware should be before ClarificationMiddleware to inject image details before LLM
 # ToolErrorHandlingMiddleware should be before ClarificationMiddleware to convert tool exceptions to ToolMessages
 # ClarificationMiddleware should be last to intercept clarification requests after model calls
+# 构建中间件链: 按顺序组装约 18 个中间件, 包括线程数据、沙盒、摘要、记忆、标题等
 def _build_middlewares(
     config: RunnableConfig,
     model_name: str | None,
@@ -312,6 +319,7 @@ def _build_middlewares(
     return middlewares
 
 
+# 获取可用技能名称集合: bootstrap 模式仅返回 "bootstrap", 否则从 agent 配置读取
 def _available_skill_names(agent_config, is_bootstrap: bool) -> set[str] | None:
     if is_bootstrap:
         return {"bootstrap"}
@@ -320,6 +328,7 @@ def _available_skill_names(agent_config, is_bootstrap: bool) -> set[str] | None:
     return None
 
 
+# 加载技能列表用于工具策略过滤: 按可用技能名称筛选, 供 filter_tools_by_skill_allowed_tools 使用
 def _load_enabled_skills_for_tool_policy(available_skills: set[str] | None, *, app_config: AppConfig) -> list[Skill]:
     try:
         from deerflow.agents.lead_agent.prompt import get_enabled_skills_for_config
@@ -334,6 +343,7 @@ def _load_enabled_skills_for_tool_policy(available_skills: set[str] | None, *, a
     return [skill for skill in skills if skill.name in available_skills]
 
 
+# LangGraph 图工厂入口: 注册在 langgraph.json 中, 是整个系统的入口点
 def make_lead_agent(config: RunnableConfig):
     """LangGraph graph factory; keep the signature compatible with LangGraph Server."""
     runtime_config = _get_runtime_config(config)
@@ -341,6 +351,7 @@ def make_lead_agent(config: RunnableConfig):
     return _make_lead_agent(config, app_config=runtime_app_config or get_app_config())
 
 
+# 内部代理创建实现: 解析运行时配置, 创建 ChatModel, 组装工具集, 构建中间件链, 生成系统提示
 def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
     # Lazy import to avoid circular dependency
     from deerflow.tools import get_available_tools

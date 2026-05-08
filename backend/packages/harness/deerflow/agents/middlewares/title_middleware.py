@@ -1,5 +1,7 @@
 """Middleware for automatic thread title generation."""
 
+# 自动标题中间件: 首次完整交互后使用 LLM 自动生成线程标题
+
 import logging
 import re
 from typing import TYPE_CHECKING, Any, NotRequired, override
@@ -25,6 +27,7 @@ class TitleMiddlewareState(AgentState):
     title: NotRequired[str | None]
 
 
+# 自动标题中间件: 首次完整交互后使用 LLM 生成线程标题
 class TitleMiddleware(AgentMiddleware[TitleMiddlewareState]):
     """Automatically generate a title for the thread after the first user message."""
 

@@ -1,3 +1,4 @@
+# 中文说明：记忆管理路由，提供全局记忆数据的查询、重载、清除、事实 CRUD、导入导出和配置查询
 """Memory API router for retrieving and managing global memory data."""
 
 from fastapi import APIRouter, HTTPException
@@ -18,6 +19,7 @@ from deerflow.runtime.user_context import get_effective_user_id
 router = APIRouter(prefix="/api", tags=["memory"])
 
 
+# 中文说明：上下文段落模型（用户和历史）
 class ContextSection(BaseModel):
     """Model for context sections (user and history)."""
 
@@ -25,6 +27,7 @@ class ContextSection(BaseModel):
     updatedAt: str = Field(default="", description="Last update timestamp")
 
 
+# 中文说明：用户上下文模型，包含工作、个人、关注焦点三个维度
 class UserContext(BaseModel):
     """Model for user context."""
 
@@ -33,6 +36,7 @@ class UserContext(BaseModel):
     topOfMind: ContextSection = Field(default_factory=ContextSection)
 
 
+# 中文说明：历史上下文模型，包含近几个月、早期和长期背景
 class HistoryContext(BaseModel):
     """Model for history context."""
 
@@ -41,6 +45,7 @@ class HistoryContext(BaseModel):
     longTermBackground: ContextSection = Field(default_factory=ContextSection)
 
 
+# 中文说明：记忆事实模型，包含内容、类别、置信度、来源等字段
 class Fact(BaseModel):
     """Model for a memory fact."""
 
@@ -53,6 +58,7 @@ class Fact(BaseModel):
     sourceError: str | None = Field(default=None, description="Optional description of the prior mistake or wrong approach")
 
 
+# 中文说明：记忆数据完整响应模型
 class MemoryResponse(BaseModel):
     """Response model for memory data."""
 
@@ -88,6 +94,7 @@ class FactPatchRequest(BaseModel):
     confidence: float | None = Field(default=None, ge=0.0, le=1.0, description="Confidence score (0-1)")
 
 
+# 中文说明：记忆配置响应模型
 class MemoryConfigResponse(BaseModel):
     """Response model for memory configuration."""
 

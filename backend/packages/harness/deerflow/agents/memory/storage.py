@@ -1,5 +1,7 @@
 """Memory storage providers."""
 
+# 记忆存储提供者: 抽象基类和文件系统实现, 支持每用户隔离和 mtime 缓存
+
 import abc
 import json
 import logging
@@ -16,11 +18,13 @@ from deerflow.config.paths import get_paths
 logger = logging.getLogger(__name__)
 
 
+# 当前 UTC 时间, ISO-8601 格式带 Z 后缀
 def utc_now_iso_z() -> str:
     """Current UTC time as ISO-8601 with ``Z`` suffix (matches prior naive-UTC output)."""
     return datetime.now(UTC).isoformat().removesuffix("+00:00") + "Z"
 
 
+# 创建空记忆结构: 包含用户上下文、历史、事实的初始模板
 def create_empty_memory() -> dict[str, Any]:
     """Create an empty memory structure."""
     return {
@@ -40,6 +44,7 @@ def create_empty_memory() -> dict[str, Any]:
     }
 
 
+# 记忆存储抽象基类: 定义 load/reload/save 接口
 class MemoryStorage(abc.ABC):
     """Abstract base class for memory storage providers."""
 
@@ -59,6 +64,7 @@ class MemoryStorage(abc.ABC):
         pass
 
 
+# 文件系统记忆存储: 每用户/代理隔离, mtime 缓存, 原子写入
 class FileMemoryStorage(MemoryStorage):
     """File-based memory storage provider."""
 
@@ -70,6 +76,7 @@ class FileMemoryStorage(MemoryStorage):
         # Guards all reads and writes to _memory_cache across concurrent callers.
         self._cache_lock = threading.Lock()
 
+    # 校验代理名称安全性: 防止路径遍历
     def _validate_agent_name(self, agent_name: str) -> None:
         """Validate that the agent name is safe to use in filesystem paths.
 
@@ -81,6 +88,7 @@ class FileMemoryStorage(MemoryStorage):
         if not AGENT_NAME_PATTERN.match(agent_name):
             raise ValueError(f"Invalid agent name {agent_name!r}: names must match {AGENT_NAME_PATTERN.pattern}")
 
+    # 获取记忆文件路径: 按 user_id 和 agent_name 分层
     def _get_memory_file_path(self, agent_name: str | None = None, *, user_id: str | None = None) -> Path:
         """Get the path to the memory file."""
         if user_id is not None:
@@ -193,6 +201,7 @@ _storage_instance: MemoryStorage | None = None
 _storage_lock = threading.Lock()
 
 
+# 获取配置的记忆存储实例 (单例, 支持自定义存储类)
 def get_memory_storage() -> MemoryStorage:
     """Get the configured memory storage instance."""
     global _storage_instance

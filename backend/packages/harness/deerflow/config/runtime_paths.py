@@ -1,9 +1,11 @@
+# 中文说明：运行时路径解析模块，为独立 harness 使用提供项目根目录和状态目录定位
 """Runtime path resolution for standalone harness usage."""
 
 import os
 from pathlib import Path
 
 
+# 中文说明：返回调用方项目根目录，用于定位运行时文件
 def project_root() -> Path:
     """Return the caller project root for runtime-owned files."""
     if env_root := os.getenv("DEER_FLOW_PROJECT_ROOT"):
@@ -16,6 +18,7 @@ def project_root() -> Path:
     return Path.cwd().resolve()
 
 
+# 中文说明：返回可写的 DeerFlow 状态目录
 def runtime_home() -> Path:
     """Return the writable DeerFlow state directory."""
     if env_home := os.getenv("DEER_FLOW_HOME"):

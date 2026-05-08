@@ -1,3 +1,4 @@
+# 中文说明：渠道存储模块，持久化 IM 聊天与 DeerFlow 线程的映射关系
 """ChannelStore — persists IM chat-to-DeerFlow thread mappings."""
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：基于 JSON 文件的存储类，管理 IM 会话到 DeerFlow 线程的映射
 class ChannelStore:
     """JSON-file-backed store that maps IM conversations to DeerFlow threads.
 
@@ -79,11 +81,13 @@ class ChannelStore:
 
     # -- public API --------------------------------------------------------
 
+    # 中文说明：根据渠道名和聊天ID查找对应的 DeerFlow 线程ID
     def get_thread_id(self, channel_name: str, chat_id: str, topic_id: str | None = None) -> str | None:
         """Look up the DeerFlow thread_id for a given IM conversation/topic."""
         entry = self._data.get(self._key(channel_name, chat_id, topic_id))
         return entry["thread_id"] if entry else None
 
+    # 中文说明：创建或更新 IM 会话到 DeerFlow 线程的映射
     def set_thread_id(
         self,
         channel_name: str,
@@ -106,6 +110,7 @@ class ChannelStore:
             }
             self._save()
 
+    # 中文说明：移除指定的映射关系，可按 topic 精确删除或批量删除
     def remove(self, channel_name: str, chat_id: str, topic_id: str | None = None) -> bool:
         """Remove a mapping.
 
@@ -136,6 +141,7 @@ class ChannelStore:
             self._save()
             return True
 
+    # 中文说明：列出所有存储的映射，可按渠道名过滤
     def list_entries(self, channel_name: str | None = None) -> list[dict[str, Any]]:
         """List all stored mappings, optionally filtered by channel."""
         results = []

@@ -1,3 +1,4 @@
+# 中文说明：认证配置模块，管理 JWT 密钥、令牌过期时间等认证相关配置
 """Authentication configuration for DeerFlow."""
 
 import logging
@@ -9,6 +10,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：JWT 和认证相关配置模型，启动时解析一次
 class AuthConfig(BaseModel):
     """JWT and auth-related configuration. Parsed once at startup.
 
@@ -30,6 +32,7 @@ class AuthConfig(BaseModel):
 _auth_config: AuthConfig | None = None
 
 
+# 中文说明：获取全局 AuthConfig 单例，首次调用时从环境变量解析
 def get_auth_config() -> AuthConfig:
     """Get the global AuthConfig instance. Parses from env on first call."""
     global _auth_config
@@ -51,6 +54,7 @@ def get_auth_config() -> AuthConfig:
     return _auth_config
 
 
+# 中文说明：设置全局 AuthConfig 实例（用于测试）
 def set_auth_config(config: AuthConfig) -> None:
     """Set the global AuthConfig instance (for testing)."""
     global _auth_config

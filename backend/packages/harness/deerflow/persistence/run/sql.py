@@ -1,3 +1,4 @@
+# 中文说明：基于 SQLAlchemy 的运行存储实现，每个方法使用短生命周期会话
 """SQLAlchemy-backed RunStore implementation.
 
 Each method acquires and releases its own short-lived session.
@@ -19,6 +20,7 @@ from deerflow.runtime.runs.store.base import RunStore
 from deerflow.runtime.user_context import AUTO, _AutoSentinel, resolve_user_id
 
 
+# 中文说明：SQL 运行仓库，实现 RunStore 接口的数据库版本
 class RunRepository(RunStore):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory

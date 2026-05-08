@@ -11,6 +11,8 @@ there are still incomplete todo items. When the model produces a final response
 and jumps back to the model node to force continued engagement.
 """
 
+# Todo 中间件: 提供 write_todos 工具, 检测上下文丢失, 防止未完成任务时提前退出
+
 from __future__ import annotations
 
 from typing import Any, override
@@ -55,6 +57,7 @@ def _format_todos(todos: list[Todo]) -> str:
     return "\n".join(lines)
 
 
+# Todo 中间件: 扩展 TodoListMiddleware, 检测上下文丢失并防止未完成任务时提前退出
 class TodoMiddleware(TodoListMiddleware):
     """Extends TodoListMiddleware with `write_todos` context-loss detection.
 

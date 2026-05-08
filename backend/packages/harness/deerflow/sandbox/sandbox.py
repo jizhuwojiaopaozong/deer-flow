@@ -1,8 +1,11 @@
+# 沙盒抽象基类: 定义 execute_command, read_file, write_file, list_dir, glob, grep 接口
+
 from abc import ABC, abstractmethod
 
 from deerflow.sandbox.search import GrepMatch
 
 
+# 沙盒抽象接口: 所有沙盒实现 (本地、Docker、K8s) 的基类
 class Sandbox(ABC):
     """Abstract base class for sandbox environments"""
 

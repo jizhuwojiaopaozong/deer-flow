@@ -1,3 +1,4 @@
+# 中文说明：线程元数据存储抽象接口，定义 CRUD 和访问控制方法
 """Abstract interface for thread metadata storage.
 
 Implementations:
@@ -19,6 +20,7 @@ import abc
 from deerflow.runtime.user_context import AUTO, _AutoSentinel
 
 
+# 中文说明：线程元数据存储抽象基类，支持三态 user_id 语义
 class ThreadMetaStore(abc.ABC):
     @abc.abstractmethod
     async def create(

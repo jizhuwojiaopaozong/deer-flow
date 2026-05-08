@@ -1,3 +1,4 @@
+# 中文说明：异步消息总线模块，解耦渠道与智能体调度器之间的通信
 """MessageBus — async pub/sub hub that decouples channels from the agent dispatcher."""
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：入站消息类型枚举，区分普通聊天消息和命令消息
 class InboundMessageType(StrEnum):
     """Types of messages arriving from IM channels."""
 
@@ -26,6 +28,7 @@ class InboundMessageType(StrEnum):
     COMMAND = "command"
 
 
+# 中文说明：入站消息数据类，封装从 IM 渠道到达智能体调度器的消息
 @dataclass
 class InboundMessage:
     """A message arriving from an IM channel toward the agent dispatcher.
@@ -58,6 +61,7 @@ class InboundMessage:
     created_at: float = field(default_factory=time.time)
 
 
+# 中文说明：已解析的文件附件数据类，包含主机文件系统路径及元信息
 @dataclass
 class ResolvedAttachment:
     """A file attachment resolved to a host filesystem path, ready for upload.
@@ -79,6 +83,7 @@ class ResolvedAttachment:
     is_image: bool
 
 
+# 中文说明：出站消息数据类，封装从智能体调度器返回渠道的响应消息
 @dataclass
 class OutboundMessage:
     """A message from the agent dispatcher back to a channel.
@@ -114,6 +119,7 @@ class OutboundMessage:
 OutboundCallback = Callable[[OutboundMessage], Coroutine[Any, Any, None]]
 
 
+# 中文说明：异步消息总线类，连接渠道和智能体调度器，支持入站队列和出站订阅
 class MessageBus:
     """Async pub/sub hub connecting channels and the agent dispatcher.
 
@@ -128,6 +134,7 @@ class MessageBus:
 
     # -- inbound -----------------------------------------------------------
 
+    # 中文说明：将渠道的入站消息放入队列
     async def publish_inbound(self, msg: InboundMessage) -> None:
         """Enqueue an inbound message from a channel."""
         await self._inbound_queue.put(msg)
@@ -139,6 +146,7 @@ class MessageBus:
             self._inbound_queue.qsize(),
         )
 
+    # 中文说明：阻塞等待下一条入站消息
     async def get_inbound(self) -> InboundMessage:
         """Block until the next inbound message is available."""
         return await self._inbound_queue.get()
@@ -149,6 +157,7 @@ class MessageBus:
 
     # -- outbound ----------------------------------------------------------
 
+    # 中文说明：注册出站消息的异步回调
     def subscribe_outbound(self, callback: OutboundCallback) -> None:
         """Register an async callback for outbound messages."""
         self._outbound_listeners.append(callback)
@@ -157,6 +166,7 @@ class MessageBus:
         """Remove a previously registered outbound callback."""
         self._outbound_listeners = [cb for cb in self._outbound_listeners if cb is not callback]
 
+    # 中文说明：将出站消息分发给所有已注册的监听器
     async def publish_outbound(self, msg: OutboundMessage) -> None:
         """Dispatch an outbound message to all registered listeners."""
         logger.info(

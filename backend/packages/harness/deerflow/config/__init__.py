@@ -1,3 +1,4 @@
+# 中文说明：配置系统入口，统一导出所有配置模块的公共接口
 from .app_config import get_app_config
 from .extensions_config import ExtensionsConfig, get_extensions_config
 from .loop_detection_config import LoopDetectionConfig

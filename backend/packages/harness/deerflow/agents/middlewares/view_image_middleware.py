@@ -1,5 +1,7 @@
 """Middleware for injecting image details into conversation before LLM call."""
 
+# 图片查看中间件: 在 LLM 调用前将 base64 图片数据注入对话, 仅视觉模型启用
+
 import logging
 from typing import override
 
@@ -16,6 +18,7 @@ class ViewImageMiddlewareState(ThreadState):
     """Reuse the thread state so reducer-backed keys keep their annotations."""
 
 
+# 图片查看中间件: 在 LLM 调用前将已查看图片的 base64 数据注入对话
 class ViewImageMiddleware(AgentMiddleware[ViewImageMiddlewareState]):
     """Injects image details as a human message before LLM calls when view_image tools have completed.
 

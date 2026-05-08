@@ -1,3 +1,4 @@
+# 中文说明：运行生命周期服务层，集中管理创建运行、格式化 SSE 帧、消费流式事件等业务逻辑
 """Run lifecycle service layer.
 
 Centralizes the business logic for creating runs, formatting SSE
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：格式化单个 SSE 帧，按 LangGraph Platform 线格式输出 event/data/id
 def format_sse(event: str, data: Any, *, event_id: str | None = None) -> str:
     """Format a single SSE frame.
 
@@ -61,6 +63,7 @@ def format_sse(event: str, data: Any, *, event_id: str | None = None) -> str:
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：标准化 stream_mode 参数为列表格式，默认值为 ["values"]
 def normalize_stream_modes(raw: list[str] | str | None) -> list[str]:
     """Normalize the stream_mode parameter to a list.
 
@@ -73,6 +76,7 @@ def normalize_stream_modes(raw: list[str] | str | None) -> list[str]:
     return raw if raw else ["values"]
 
 
+# 中文说明：将 LangGraph Platform 输入格式转换为 LangChain 状态字典（消息类型转换）
 def normalize_input(raw_input: dict[str, Any] | None) -> dict[str, Any]:
     """Convert LangGraph Platform input format to LangChain state dict."""
     if raw_input is None:
@@ -119,6 +123,7 @@ _CONTEXT_CONFIGURABLE_KEYS: frozenset[str] = frozenset(
 )
 
 
+# 中文说明：将请求上下文中的白名单键合并到 config 的 configurable 和 context 中
 def merge_run_context_overrides(config: dict[str, Any], context: Mapping[str, Any] | None) -> None:
     """Merge whitelisted keys from ``body.context`` into both ``config['configurable']``
     and ``config['context']`` so they are visible to legacy configurable readers and
@@ -136,6 +141,7 @@ def merge_run_context_overrides(config: dict[str, Any], context: Mapping[str, An
                 runtime_context.setdefault(key, context[key])
 
 
+# 中文说明：根据 assistant_id 解析对应的智能体工厂函数，所有 ID 均映射到 lead_agent
 def resolve_agent_factory(assistant_id: str | None):
     """Resolve the agent factory callable from config.
 
@@ -150,6 +156,7 @@ def resolve_agent_factory(assistant_id: str | None):
     return make_lead_agent
 
 
+# 中文说明：为智能体构建 RunnableConfig，处理 context/configurable 兼容性并注入自定义 agent_name
 def build_run_config(
     thread_id: str,
     request_config: dict[str, Any] | None,
@@ -226,6 +233,7 @@ def build_run_config(
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：创建 RunRecord 并启动后台智能体任务，处理线程元数据 upsert
 async def start_run(
     body: Any,
     thread_id: str,
@@ -315,6 +323,7 @@ async def start_run(
     return record
 
 
+# 中文说明：SSE 消费者异步生成器，从 StreamBridge 订阅事件并输出 SSE 帧，断开时根据策略取消或继续
 async def sse_consumer(
     bridge: StreamBridge,
     record: RunRecord,

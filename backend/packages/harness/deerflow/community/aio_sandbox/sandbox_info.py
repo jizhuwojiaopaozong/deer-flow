@@ -1,3 +1,4 @@
+# 中文说明：沙箱元数据结构，用于跨进程发现和状态持久化
 """Sandbox metadata for cross-process discovery and state persistence."""
 
 from __future__ import annotations
@@ -7,6 +8,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+# 中文说明：沙箱元数据类，包含连接 URL、容器名称、创建时间等信息
 class SandboxInfo:
     """Persisted sandbox metadata that enables cross-process discovery.
 

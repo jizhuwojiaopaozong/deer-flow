@@ -1,23 +1,25 @@
+# 代理创建工具: 引导流程中创建新的自定义代理, 写入 SOUL.md 和 config.yaml
 import logging
 
 import yaml
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
+from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 
 from deerflow.config.agents_config import validate_agent_name
 from deerflow.config.paths import get_paths
 from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.tools.types import Runtime
 
 logger = logging.getLogger(__name__)
 
 
+# 创建自定义代理: 写入 SOUL.md 定义人格, 可选写入 config.yaml 配置技能
 @tool
 def setup_agent(
     soul: str,
     description: str,
-    runtime: Runtime,
+    runtime: ToolRuntime,
     skills: list[str] | None = None,
 ) -> Command:
     """Setup the custom DeerFlow agent.

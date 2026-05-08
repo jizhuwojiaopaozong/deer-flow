@@ -1,5 +1,7 @@
 """Summarization middleware extensions for DeerFlow."""
 
+# 摘要中间件扩展: 在对话接近 token 限制时自动压缩历史消息, 支持技能文件保护
+
 from __future__ import annotations
 
 import logging
@@ -13,8 +15,6 @@ from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, RemoveM
 from langgraph.config import get_config
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.runtime import Runtime
-
-from deerflow.agents.middlewares.tool_call_metadata import clone_ai_message_with_tool_calls
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,10 @@ def _clone_ai_message(
     content: Any | None = None,
 ) -> AIMessage:
     """Clone an AIMessage while replacing its tool_calls list and optional content."""
-    return clone_ai_message_with_tool_calls(message, tool_calls, content=content)
+    update: dict[str, Any] = {"tool_calls": tool_calls}
+    if content is not None:
+        update["content"] = content
+    return message.model_copy(update=update)
 
 
 @dataclass
@@ -94,6 +97,7 @@ class _SkillBundle:
     skill_key: str
 
 
+# DeerFlow 摘要中间件: 扩展 LangChain 的 SummarizationMiddleware, 支持技能文件保护和钩子
 class DeerFlowSummarizationMiddleware(SummarizationMiddleware):
     """Summarization middleware with pre-compression hook dispatch and skill rescue."""
 

@@ -1,3 +1,5 @@
+# 中文说明：Bash命令执行子代理配置，专门处理终端命令执行相关任务
+
 """Bash command execution subagent configuration."""
 
 from deerflow.subagents.config import SubagentConfig

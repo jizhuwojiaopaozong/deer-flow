@@ -1,3 +1,4 @@
+# 中文说明：可读性提取工具，从 HTML 中提取文章内容并转换为 Markdown
 import logging
 import re
 import subprocess
@@ -9,6 +10,7 @@ from readabilipy import simple_json_from_html_string
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：文章数据类，支持转换为 Markdown 和多模态消息格式
 class Article:
     url: str
 
@@ -55,7 +57,9 @@ class Article:
         return content
 
 
+# 中文说明：可读性内容提取器，使用 Readability.js 或纯 Python 后备方案提取文章
 class ReadabilityExtractor:
+    # 中文说明：从 HTML 中提取文章标题和正文内容
     def extract_article(self, html: str) -> Article:
         try:
             article = simple_json_from_html_string(html, use_readability=True)

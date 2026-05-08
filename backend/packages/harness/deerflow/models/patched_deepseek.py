@@ -1,3 +1,5 @@
+# 中文说明：修复ChatDeepSeek在多轮对话中丢失reasoning_content的问题
+
 """Patched ChatDeepSeek that preserves reasoning_content in multi-turn conversations.
 
 This module provides a patched version of ChatDeepSeek that properly handles
@@ -14,6 +16,7 @@ from langchain_core.messages import AIMessage
 from langchain_deepseek import ChatDeepSeek
 
 
+# 中文说明：ChatDeepSeek补丁类，在请求载荷中保留reasoning_content以兼容思考模式API
 class PatchedChatDeepSeek(ChatDeepSeek):
     """ChatDeepSeek with proper reasoning_content preservation.
 

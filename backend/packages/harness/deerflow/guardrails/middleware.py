@@ -1,3 +1,4 @@
+# 中文说明：守卫中间件，在工具调用执行前通过 GuardrailProvider 进行授权评估
 """GuardrailMiddleware - evaluates tool calls against a GuardrailProvider before execution."""
 
 import logging
@@ -17,6 +18,7 @@ from deerflow.guardrails.provider import GuardrailDecision, GuardrailProvider, G
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：守卫中间件类，拦截工具调用并根据提供者决策允许或拒绝执行
 class GuardrailMiddleware(AgentMiddleware[AgentState]):
     """Evaluate tool calls against a GuardrailProvider before execution.
 

@@ -1,3 +1,4 @@
+# 中文说明：远程沙箱后端，将 Pod 生命周期委托给 provisioner 服务管理
 """Remote sandbox backend — delegates Pod lifecycle to the provisioner service.
 
 The provisioner dynamically creates per-sandbox-id Pods + NodePort Services
@@ -27,6 +28,7 @@ from .sandbox_info import SandboxInfo
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：远程沙箱后端，通过 HTTP 调用 provisioner 服务创建和管理 K8s Pod
 class RemoteSandboxBackend(SandboxBackend):
     """Backend that delegates sandbox lifecycle to the provisioner service.
 

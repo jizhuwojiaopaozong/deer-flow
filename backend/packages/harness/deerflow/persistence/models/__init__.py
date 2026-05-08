@@ -1,3 +1,4 @@
+# 中文说明：ORM 模型注册入口，确保所有模型被 Base.metadata 发现
 """ORM model registration entry point.
 
 Importing this module ensures all ORM models are registered with

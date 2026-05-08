@@ -1,8 +1,10 @@
+# 中文说明：自定义代理管理 API 配置，控制是否通过 HTTP 暴露代理管理接口
 """Configuration for the custom agents management API."""
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：代理 API 配置，启用/禁用自定义代理管理的 HTTP 接口
 class AgentsApiConfig(BaseModel):
     """Configuration for custom-agent and user-profile management routes."""
 

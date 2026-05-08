@@ -1,3 +1,4 @@
+# 中文说明：DeerFlow 应用持久化层，管理运行元数据、线程所有权等应用数据
 """DeerFlow application persistence layer (SQLAlchemy 2.0 async ORM).
 
 This module manages DeerFlow's own application data -- runs metadata,

@@ -1,3 +1,4 @@
+# 中文说明：异步存储工厂，后端与配置的检查点保持一致
 """Async Store factory — backend mirrors the configured checkpointer.
 
 The store and checkpointer share the same ``checkpointer`` section in
@@ -86,6 +87,7 @@ async def _async_store(config) -> AsyncIterator[BaseStore]:
 
 
 @contextlib.asynccontextmanager
+# 中文说明：异步上下文管理器，创建与检查点后端匹配的存储实例
 async def make_store(app_config: AppConfig | None = None) -> AsyncIterator[BaseStore]:
     """Async context manager that yields a Store whose backend matches the
     configured checkpointer.

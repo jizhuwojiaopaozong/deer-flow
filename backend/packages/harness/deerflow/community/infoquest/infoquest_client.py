@@ -1,3 +1,4 @@
+# 中文说明：BytePlus InfoQuest 搜索和抓取 API 客户端实现
 """Util that calls InfoQuest Search And Fetch API.
 
 In order to set this up, follow instructions at:
@@ -14,6 +15,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：InfoQuest API 客户端，支持网页搜索、图片搜索和网页抓取
 class InfoQuestClient:
     """Client for interacting with the InfoQuest web search and fetch API."""
 
@@ -42,6 +44,7 @@ class InfoQuestClient:
             logger.debug(config_details)
             logger.debug("\n" + "*" * 70 + "\n")
 
+    # 中文说明：抓取指定 URL 的网页内容
     def fetch(self, url: str, return_format: str = "html") -> str:
         if logger.isEnabledFor(logging.DEBUG):
             url_truncated = url[:50] + "..." if len(url) > 50 else url
@@ -231,6 +234,7 @@ class InfoQuestClient:
 
         return clean_results
 
+    # 中文说明：执行网页搜索并返回清理后的结果
     def web_search(
         self,
         query: str,
@@ -350,6 +354,7 @@ class InfoQuestClient:
 
         return response_json
 
+    # 中文说明：执行图片搜索并返回清理后的结果
     def image_search(
         self,
         query: str,

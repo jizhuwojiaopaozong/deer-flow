@@ -1,3 +1,5 @@
+# 中文说明：凭证加载模块，支持从Claude Code CLI和Codex CLI自动加载OAuth令牌
+
 """Auto-load credentials from Claude Code CLI and Codex CLI.
 
 Implements two credential strategies:
@@ -26,11 +28,13 @@ logger = logging.getLogger(__name__)
 OAUTH_ANTHROPIC_BETAS = "oauth-2025-04-20,claude-code-20250219,interleaved-thinking-2025-05-14"
 
 
+# 中文说明：判断令牌是否为Claude Code OAuth令牌（非标准API密钥）
 def is_oauth_token(token: str) -> bool:
     """Check if a token is a Claude Code OAuth token (not a standard API key)."""
     return isinstance(token, str) and "sk-ant-oat" in token
 
 
+# 中文说明：Claude Code CLI OAuth凭证数据类
 @dataclass
 class ClaudeCodeCredential:
     """Claude Code CLI OAuth credential."""
@@ -47,6 +51,7 @@ class ClaudeCodeCredential:
         return time.time() * 1000 > self.expires_at - 60_000  # 1 min buffer
 
 
+# 中文说明：Codex CLI凭证数据类
 @dataclass
 class CodexCliCredential:
     """Codex CLI credential."""
@@ -146,6 +151,7 @@ def _extract_claude_code_credential(data: dict[str, Any], source: str) -> Claude
     return cred
 
 
+# 中文说明：从环境变量或凭据文件加载Claude Code OAuth凭证
 def load_claude_code_credential() -> ClaudeCodeCredential | None:
     """Load OAuth credential from explicit Claude Code handoff sources.
 
@@ -195,6 +201,7 @@ def load_claude_code_credential() -> ClaudeCodeCredential | None:
     return None
 
 
+# 中文说明：从~/.codex/auth.json加载Codex CLI凭证
 def load_codex_cli_credential() -> CodexCliCredential | None:
     """Load credential from Codex CLI (~/.codex/auth.json)."""
     cred_path = _resolve_credential_path("CODEX_AUTH_PATH", ".codex/auth.json")

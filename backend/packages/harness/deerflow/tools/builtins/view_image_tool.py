@@ -1,15 +1,16 @@
+# 图片查看工具: 读取图片文件并转换为 base64, 供视觉模型使用
 import base64
 import mimetypes
 from pathlib import Path
 from typing import Annotated
 
-from langchain.tools import InjectedToolCallId, tool
+from langchain.tools import InjectedToolCallId, ToolRuntime, tool
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
+from langgraph.typing import ContextT
 
-from deerflow.agents.thread_state import ThreadDataState
+from deerflow.agents.thread_state import ThreadDataState, ThreadState
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX
-from deerflow.tools.types import Runtime
 
 _ALLOWED_IMAGE_VIRTUAL_ROOTS = (
     f"{VIRTUAL_PATH_PREFIX}/workspace",
@@ -26,10 +27,12 @@ _EXTENSION_TO_MIME = {
 }
 
 
+# 检查图片路径是否在允许的虚拟目录下: 限制 workspace/uploads/outputs
 def _is_allowed_image_virtual_path(image_path: str) -> bool:
     return any(image_path == root or image_path.startswith(f"{root}/") for root in _ALLOWED_IMAGE_VIRTUAL_ROOTS)
 
 
+# 通过文件魔数检测图片 MIME 类型: 支持 JPEG/PNG/WebP
 def _detect_image_mime(image_data: bytes) -> str | None:
     if image_data.startswith(b"\xff\xd8\xff"):
         return "image/jpeg"
@@ -40,15 +43,17 @@ def _detect_image_mime(image_data: bytes) -> str | None:
     return None
 
 
+# 清理图片错误信息: 脱敏本地路径防止信息泄露
 def _sanitize_image_error(error: Exception, thread_data: ThreadDataState | None) -> str:
     from deerflow.sandbox.tools import mask_local_paths_in_output
 
     return mask_local_paths_in_output(f"{type(error).__name__}: {error}", thread_data)
 
 
+# 图片查看工具入口: 验证路径、格式和大小后读取图片并转为 base64
 @tool("view_image", parse_docstring=True)
 def view_image_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     image_path: str,
     tool_call_id: Annotated[str, InjectedToolCallId],
 ) -> Command:

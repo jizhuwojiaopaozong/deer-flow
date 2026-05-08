@@ -1,3 +1,5 @@
+# 沙盒中间件: 在代理启动前获取沙盒, 结束后释放沙盒
+
 import logging
 from typing import NotRequired, override
 
@@ -18,6 +20,7 @@ class SandboxMiddlewareState(AgentState):
     thread_data: NotRequired[ThreadDataState | None]
 
 
+# 沙盒中间件: before_agent 获取沙盒 ID, after_agent 释放沙盒, 支持惰性初始化
 class SandboxMiddleware(AgentMiddleware[SandboxMiddlewareState]):
     """Create a sandbox environment and assign it to an agent.
 

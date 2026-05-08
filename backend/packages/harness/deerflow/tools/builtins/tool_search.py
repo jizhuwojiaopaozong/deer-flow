@@ -1,3 +1,4 @@
+# 工具搜索模块: 延迟工具发现机制, 运行时按需获取工具的完整定义
 """Tool search — deferred tool discovery at runtime.
 
 Contains:
@@ -27,6 +28,7 @@ MAX_RESULTS = 5  # Max tools returned per search
 # ── Registry ──
 
 
+# 延迟工具条目: 存储工具的轻量元数据, 搜索匹配时返回完整工具对象
 @dataclass
 class DeferredToolEntry:
     """Lightweight metadata for a deferred tool (no full schema in context)."""
@@ -36,12 +38,14 @@ class DeferredToolEntry:
     tool: BaseTool  # Full tool object, returned only on search match
 
 
+# 延迟工具注册表: 管理延迟工具的注册、搜索和提升
 class DeferredToolRegistry:
     """Registry of deferred tools, searchable by regex pattern."""
 
     def __init__(self):
         self._entries: list[DeferredToolEntry] = []
 
+    # 注册延迟工具: 将工具添加到延迟注册表
     def register(self, tool: BaseTool) -> None:
         self._entries.append(
             DeferredToolEntry(
@@ -51,6 +55,7 @@ class DeferredToolRegistry:
             )
         )
 
+    # 提升工具: 将延迟工具移出注册表, 使其可被 LLM 直接调用
     def promote(self, names: set[str]) -> None:
         """Remove tools from the deferred registry so they pass through the filter.
 
@@ -66,6 +71,7 @@ class DeferredToolRegistry:
         if promoted:
             logger.debug(f"Promoted {promoted} tool(s) from deferred to active: {names}")
 
+    # 搜索延迟工具: 支持精确选择、关键词匹配和正则搜索三种查询方式
     def search(self, query: str) -> list[BaseTool]:
         """Search deferred tools by regex pattern against name + description.
 
@@ -125,6 +131,7 @@ class DeferredToolRegistry:
         return len(self._entries)
 
 
+# 正则匹配评分: 统计模式在名称和描述中的匹配次数
 def _regex_score(pattern: str, entry: DeferredToolEntry) -> int:
     try:
         regex = re.compile(pattern, re.IGNORECASE)
@@ -145,6 +152,7 @@ def _regex_score(pattern: str, entry: DeferredToolEntry) -> int:
 _registry_var: contextvars.ContextVar[DeferredToolRegistry | None] = contextvars.ContextVar("deferred_tool_registry", default=None)
 
 
+# 获取当前上下文的延迟注册表: 使用 ContextVar 隔离并发请求
 def get_deferred_registry() -> DeferredToolRegistry | None:
     return _registry_var.get()
 
@@ -161,6 +169,7 @@ def reset_deferred_registry() -> None:
 # ── Tool ──
 
 
+# 工具搜索工具: 供代理调用以获取延迟工具的完整定义
 @tool
 def tool_search(query: str) -> str:
     """Fetches full schema definitions for deferred tools so they can be called.

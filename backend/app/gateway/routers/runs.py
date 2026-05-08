@@ -1,3 +1,4 @@
+# 中文说明：无状态运行端点，无需预先创建线程即可流式输出或阻塞等待运行结果
 """Stateless runs endpoints -- stream and wait without a pre-existing thread.
 
 These endpoints auto-create a temporary thread when no ``thread_id`` is
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/runs", tags=["runs"])
 
 
+# 中文说明：从请求体解析 thread_id，未提供时自动生成新 UUID
 def _resolve_thread_id(body: RunCreateRequest) -> str:
     """Return the thread_id from the request body, or generate a new one."""
     thread_id = (body.config or {}).get("configurable", {}).get("thread_id")
@@ -33,6 +35,7 @@ def _resolve_thread_id(body: RunCreateRequest) -> str:
 
 
 @router.post("/stream")
+# 中文说明：创建无状态运行并通过 SSE 流式输出事件
 async def stateless_stream(body: RunCreateRequest, request: Request) -> StreamingResponse:
     """Create a run and stream events via SSE.
 
@@ -58,6 +61,7 @@ async def stateless_stream(body: RunCreateRequest, request: Request) -> Streamin
 
 
 @router.post("/wait", response_model=dict)
+# 中文说明：创建无状态运行并阻塞等待完成
 async def stateless_wait(body: RunCreateRequest, request: Request) -> dict:
     """Create a run and block until completion.
 
@@ -93,6 +97,7 @@ async def stateless_wait(body: RunCreateRequest, request: Request) -> dict:
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：根据 run_id 获取运行记录并进行用户所有权检查
 async def _resolve_run(run_id: str, request: Request) -> dict:
     """Fetch run by run_id with user ownership check. Raises 404 if not found."""
     run_store = get_run_store(request)

@@ -1,3 +1,4 @@
+# 中文说明：线程元数据 ORM 模型，存储线程状态和显示名称
 """ORM model for thread metadata."""
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from deerflow.persistence.base import Base
 
 
+# 中文说明：线程元数据表，存储线程的显示名称、状态和扩展元数据
 class ThreadMetaRow(Base):
     __tablename__ = "threads_meta"
 

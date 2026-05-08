@@ -1,3 +1,4 @@
+# 中文说明：基于 DuckDuckGo 的图片搜索工具，用于为图片生成提供参考素材
 """
 Image Search Tool - Search images using DuckDuckGo for reference in image generation.
 """
@@ -12,6 +13,7 @@ from deerflow.config import get_app_config
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：执行 DuckDuckGo 图片搜索的内部函数
 def _search_images(
     query: str,
     max_results: int = 5,
@@ -74,6 +76,7 @@ def _search_images(
         return []
 
 
+# 中文说明：搜索在线图片，为图片生成提供参考素材
 @tool("image_search", parse_docstring=True)
 def image_search_tool(
     query: str,

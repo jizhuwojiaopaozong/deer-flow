@@ -1,5 +1,7 @@
 """Middleware for memory mechanism."""
 
+# 记忆中间件: 过滤消息 (用户输入 + 最终 AI 响应), 捕获 user_id, 排队异步记忆更新
+
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -25,6 +27,7 @@ class MemoryMiddlewareState(AgentState):
     pass
 
 
+# 记忆中间件: 在代理完成后过滤消息并排队异步记忆更新
 class MemoryMiddleware(AgentMiddleware[MemoryMiddlewareState]):
     """Middleware that queues conversation for memory update after agent execution.
 

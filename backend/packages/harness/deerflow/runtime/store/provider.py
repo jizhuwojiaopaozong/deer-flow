@@ -1,3 +1,4 @@
+# 中文说明：同步存储工厂，后端与检查点配置保持一致
 """Sync Store factory.
 
 Provides a **sync singleton** and a **sync context manager** for CLI tools
@@ -100,6 +101,7 @@ _store: BaseStore | None = None
 _store_ctx = None  # open context manager keeping the connection alive
 
 
+# 中文说明：获取全局同步存储单例，首次调用时创建
 def get_store() -> BaseStore:
     """Return the global sync Store singleton, creating it on first call.
 
@@ -141,6 +143,7 @@ def get_store() -> BaseStore:
     return _store
 
 
+# 中文说明：重置同步存储单例，强制下次调用重新创建
 def reset_store() -> None:
     """Reset the sync singleton, forcing recreation on the next call.
 

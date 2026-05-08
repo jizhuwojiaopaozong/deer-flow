@@ -1,3 +1,4 @@
+# 中文说明：SQLAlchemy 声明式基类，提供自动 to_dict 序列化支持
 """SQLAlchemy declarative base with automatic to_dict support.
 
 All DeerFlow ORM models inherit from this Base. It provides a generic
@@ -13,6 +14,7 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import DeclarativeBase
 
 
+# 中文说明：所有 DeerFlow ORM 模型的基类，提供自动序列化和标准 repr
 class Base(DeclarativeBase):
     """Base class for all DeerFlow ORM models.
 
@@ -21,6 +23,7 @@ class Base(DeclarativeBase):
     - Standard __repr__() showing all column values.
     """
 
+    # 中文说明：将 ORM 实例转换为普通字典
     def to_dict(self, *, exclude: set[str] | None = None) -> dict:
         """Convert ORM instance to plain dict.
 

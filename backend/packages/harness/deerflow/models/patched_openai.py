@@ -1,3 +1,5 @@
+# 中文说明：修复ChatOpenAI在Gemini思考模型中丢失thought_signature导致400错误的问题
+
 """Patched ChatOpenAI that preserves thought_signature for Gemini thinking models.
 
 When using Gemini with thinking enabled via an OpenAI-compatible gateway (e.g.
@@ -28,6 +30,7 @@ from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 
 
+# 中文说明：ChatOpenAI补丁类，在请求中恢复Gemini思考模型工具调用的thought_signature字段
 class PatchedChatOpenAI(ChatOpenAI):
     """ChatOpenAI with ``thought_signature`` preservation for Gemini thinking via OpenAI gateway.
 
@@ -91,6 +94,7 @@ class PatchedChatOpenAI(ChatOpenAI):
         return payload
 
 
+# 中文说明：将thought_signature从原始消息重新注入到序列化的工具调用载荷中
 def _restore_tool_call_signatures(payload_msg: dict, orig_msg: AIMessage) -> None:
     """Re-inject ``thought_signature`` onto tool-call objects in *payload_msg*.
 

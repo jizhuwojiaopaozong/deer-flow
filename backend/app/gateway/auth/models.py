@@ -1,3 +1,4 @@
+# 中文说明：认证用用户 Pydantic 模型定义
 """User Pydantic models for authentication."""
 
 from datetime import UTC, datetime
@@ -12,6 +13,7 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
+# 中文说明：内部用户模型，包含 ID、邮箱、密码哈希、角色、OAuth 关联和令牌版本等字段
 class User(BaseModel):
     """Internal user representation."""
 
@@ -32,6 +34,7 @@ class User(BaseModel):
     token_version: int = Field(default=0, description="Incremented on password change to invalidate old JWTs")
 
 
+# 中文说明：用户信息端点的响应模型
 class UserResponse(BaseModel):
     """Response model for user info endpoint."""
 

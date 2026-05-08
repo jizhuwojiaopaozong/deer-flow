@@ -1,3 +1,4 @@
+# 中文说明：基于 SQLAlchemy 的运行事件存储实现
 """SQLAlchemy-backed RunEventStore implementation.
 
 Persists events to the ``run_events`` table. Trace content is truncated
@@ -9,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -21,6 +21,7 @@ from deerflow.runtime.user_context import AUTO, _AutoSentinel, get_current_user,
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：数据库运行事件存储，支持 trace 内容截断和 user_id 打标
 class DbRunEventStore(RunEventStore):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession], *, max_trace_content: int = 10240):
         self._sf = session_factory
@@ -34,39 +35,26 @@ class DbRunEventStore(RunEventStore):
         if isinstance(val, datetime):
             d["created_at"] = val.isoformat()
         d.pop("id", None)
-        # Restore structured content that was JSON-serialized on write.
+        # Restore dict content that was JSON-serialized on write
         raw = d.get("content", "")
-        metadata = d.get("metadata", {})
-        if isinstance(raw, str) and (metadata.get("content_is_json") or metadata.get("content_is_dict")):
+        if isinstance(raw, str) and d.get("metadata", {}).get("content_is_dict"):
             try:
                 d["content"] = json.loads(raw)
             except (json.JSONDecodeError, ValueError):
-                # Content looked like JSON but failed to parse;
+                # Content looked like JSON (content_is_dict flag) but failed to parse;
                 # keep the raw string as-is.
                 logger.debug("Failed to deserialize content as JSON for event seq=%s", d.get("seq"))
         return d
 
-    def _truncate_trace(self, category: str, content: Any, metadata: dict | None) -> tuple[Any, dict]:
+    def _truncate_trace(self, category: str, content: str | dict, metadata: dict | None) -> tuple[str | dict, dict]:
         if category == "trace":
-            text = content if isinstance(content, str) else json.dumps(content, default=str, ensure_ascii=False)
+            text = json.dumps(content, default=str, ensure_ascii=False) if isinstance(content, dict) else content
             encoded = text.encode("utf-8")
             if len(encoded) > self._max_trace_content:
                 # Truncate by bytes, then decode back (may cut a multi-byte char, so use errors="ignore")
                 content = encoded[: self._max_trace_content].decode("utf-8", errors="ignore")
                 metadata = {**(metadata or {}), "content_truncated": True, "original_byte_length": len(encoded)}
         return content, metadata or {}
-
-    @staticmethod
-    def _content_to_db(content: Any, metadata: dict | None) -> tuple[str, dict]:
-        metadata = metadata or {}
-        if isinstance(content, str):
-            return content, metadata
-
-        db_content = json.dumps(content, default=str, ensure_ascii=False)
-        metadata = {**metadata, "content_is_json": True}
-        if isinstance(content, dict):
-            metadata["content_is_dict"] = True
-        return db_content, metadata
 
     @staticmethod
     def _user_id_from_context() -> str | None:
@@ -96,7 +84,11 @@ class DbRunEventStore(RunEventStore):
         the initial ``human_message`` event (once per run).
         """
         content, metadata = self._truncate_trace(category, content, metadata)
-        db_content, metadata = self._content_to_db(content, metadata)
+        if isinstance(content, dict):
+            db_content = json.dumps(content, default=str, ensure_ascii=False)
+            metadata = {**(metadata or {}), "content_is_dict": True}
+        else:
+            db_content = content
         user_id = self._user_id_from_context()
         async with self._sf() as session:
             async with session.begin():
@@ -138,7 +130,11 @@ class DbRunEventStore(RunEventStore):
                     category = e.get("category", "trace")
                     metadata = e.get("metadata")
                     content, metadata = self._truncate_trace(category, content, metadata)
-                    db_content, metadata = self._content_to_db(content, metadata)
+                    if isinstance(content, dict):
+                        db_content = json.dumps(content, default=str, ensure_ascii=False)
+                        metadata = {**(metadata or {}), "content_is_dict": True}
+                    else:
+                        db_content = content
                     row = RunEventRow(
                         thread_id=e["thread_id"],
                         run_id=e["run_id"],

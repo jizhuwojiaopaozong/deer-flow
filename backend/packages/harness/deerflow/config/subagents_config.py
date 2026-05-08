@@ -1,3 +1,4 @@
+# 中文说明：子代理系统配置，定义超时、最大轮次和自定义代理类型
 """Configuration for the subagent system loaded from config.yaml."""
 
 import logging
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：单个子代理的配置覆盖项（超时、轮次、模型、技能）
 class SubagentOverrideConfig(BaseModel):
     """Per-agent configuration overrides."""
 
@@ -31,6 +33,7 @@ class SubagentOverrideConfig(BaseModel):
     )
 
 
+# 中文说明：用户自定义子代理类型配置，在 config.yaml 中声明
 class CustomSubagentConfig(BaseModel):
     """User-defined subagent type declared in config.yaml."""
 
@@ -68,6 +71,7 @@ class CustomSubagentConfig(BaseModel):
     )
 
 
+# 中文说明：子代理系统总配置，包含全局默认值和逐代理覆盖
 class SubagentsAppConfig(BaseModel):
     """Configuration for the subagent system."""
 

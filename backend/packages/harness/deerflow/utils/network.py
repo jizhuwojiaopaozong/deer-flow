@@ -1,3 +1,4 @@
+# 中文说明：线程安全的网络工具，提供端口分配和释放功能
 """Thread-safe network utilities."""
 
 import socket
@@ -5,6 +6,7 @@ import threading
 from contextlib import contextmanager
 
 
+# 中文说明：线程安全的端口分配器，防止并发环境下的端口冲突
 class PortAllocator:
     """Thread-safe port allocator that prevents port conflicts in concurrent environments.
 
@@ -110,6 +112,7 @@ class PortAllocator:
 _global_port_allocator = PortAllocator()
 
 
+# 中文说明：线程安全地获取一个可用端口
 def get_free_port(start_port: int = 8080, max_range: int = 100) -> int:
     """Get a free port in a thread-safe manner.
 

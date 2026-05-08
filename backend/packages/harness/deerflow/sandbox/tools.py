@@ -1,11 +1,15 @@
+# 沙盒工具模块: 提供 bash, ls, glob, grep, read_file, write_file, str_replace 等工具
+# 处理虚拟路径转换、安全验证、输出截断、本地沙盒路径校验等
+
 import posixpath
 import re
 import shlex
 from pathlib import Path
 
-from langchain.tools import tool
+from langchain.tools import ToolRuntime, tool
+from langgraph.typing import ContextT
 
-from deerflow.agents.thread_state import ThreadDataState
+from deerflow.agents.thread_state import ThreadDataState, ThreadState
 from deerflow.config import get_app_config
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX
 from deerflow.sandbox.exceptions import (
@@ -18,7 +22,6 @@ from deerflow.sandbox.sandbox import Sandbox
 from deerflow.sandbox.sandbox_provider import get_sandbox_provider
 from deerflow.sandbox.search import GrepMatch
 from deerflow.sandbox.security import LOCAL_HOST_BASH_DISABLED_MESSAGE, is_host_bash_allowed
-from deerflow.tools.types import Runtime
 
 _ABSOLUTE_PATH_PATTERN = re.compile(r"(?<![:\w])(?<!:/)/(?:[^\s\"'`;&|<>()]+)")
 _FILE_URL_PATTERN = re.compile(r"\bfile://\S+", re.IGNORECASE)
@@ -78,6 +81,7 @@ _SHELL_REDIRECTION_OPERATORS = {
 }
 
 
+# 获取技能容器路径 (带缓存)
 def _get_skills_container_path() -> str:
     """Get the skills container path from config, with fallback to default.
 
@@ -419,7 +423,7 @@ def _join_path_preserving_style(base: str, relative: str) -> str:
     return f"{stripped_base}{separator}{normalized_relative}"
 
 
-def _sanitize_error(error: Exception, runtime: Runtime | None = None) -> str:
+def _sanitize_error(error: Exception, runtime: "ToolRuntime[ContextT, ThreadState] | None" = None) -> str:
     """Sanitize an error message to avoid leaking host filesystem paths.
 
     In local-sandbox mode, resolved host paths in the error string are masked
@@ -433,6 +437,7 @@ def _sanitize_error(error: Exception, runtime: Runtime | None = None) -> str:
     return msg
 
 
+# 将虚拟路径 (/mnt/user-data/*, /mnt/skills) 替换为实际线程数据路径
 def replace_virtual_path(path: str, thread_data: ThreadDataState | None) -> str:
     """Replace virtual /mnt/user-data paths with actual thread data paths.
 
@@ -499,6 +504,7 @@ def _thread_actual_to_virtual_mappings(thread_data: ThreadDataState) -> dict[str
     return {actual: virtual for virtual, actual in _thread_virtual_to_actual_mappings(thread_data).items()}
 
 
+# 在输出中屏蔽主机本地路径, 防止泄露宿主机目录结构
 def mask_local_paths_in_output(output: str, thread_data: ThreadDataState | None) -> str:
     """Mask host absolute paths from local sandbox output using virtual paths.
 
@@ -582,6 +588,7 @@ def _reject_path_traversal(path: str) -> None:
             raise PermissionError("Access denied: path traversal detected")
 
 
+# 安全门: 验证本地沙盒工具路径是否允许访问, 阻止路径遍历和越权访问
 def validate_local_tool_path(path: str, thread_data: ThreadDataState | None, *, read_only: bool = False) -> None:
     """Validate that a virtual path is allowed for local-sandbox access.
 
@@ -888,6 +895,7 @@ def resolve_and_validate_user_data_path(path: str, thread_data: ThreadDataState)
     return _resolve_and_validate_user_data_path(path, thread_data)
 
 
+# 验证 bash 命令中的路径安全性: 解析 shell token, 检查每个绝对路径
 def validate_local_bash_command_paths(command: str, thread_data: ThreadDataState | None) -> None:
     """Validate absolute paths in local-sandbox bash commands.
 
@@ -930,6 +938,7 @@ def validate_local_bash_command_paths(command: str, thread_data: ThreadDataState
         raise PermissionError(f"Unsafe absolute paths in command: {unsafe}. Use paths under {VIRTUAL_PATH_PREFIX}")
 
 
+# 替换 bash 命令中的所有虚拟路径为实际路径
 def replace_virtual_paths_in_command(command: str, thread_data: ThreadDataState | None) -> str:
     """Replace all virtual paths (/mnt/user-data, /mnt/skills, /mnt/acp-workspace) in a command string.
 
@@ -994,7 +1003,8 @@ def _apply_cwd_prefix(command: str, thread_data: ThreadDataState | None) -> str:
     return command
 
 
-def get_thread_data(runtime: Runtime | None) -> ThreadDataState | None:
+# 从运行时上下文获取线程数据
+def get_thread_data(runtime: ToolRuntime[ContextT, ThreadState] | None) -> ThreadDataState | None:
     """Extract thread_data from runtime state."""
     if runtime is None:
         return None
@@ -1003,7 +1013,8 @@ def get_thread_data(runtime: Runtime | None) -> ThreadDataState | None:
     return runtime.state.get("thread_data")
 
 
-def is_local_sandbox(runtime: Runtime | None) -> bool:
+# 检查是否为本地沙盒模式
+def is_local_sandbox(runtime: ToolRuntime[ContextT, ThreadState] | None) -> bool:
     """Check if the current sandbox is a local sandbox.
 
     Path replacement is only needed for local sandbox since aio sandbox
@@ -1019,7 +1030,8 @@ def is_local_sandbox(runtime: Runtime | None) -> bool:
     return sandbox_state.get("sandbox_id") == "local"
 
 
-def sandbox_from_runtime(runtime: Runtime | None = None) -> Sandbox:
+# 从运行时获取沙盒实例
+def sandbox_from_runtime(runtime: ToolRuntime[ContextT, ThreadState] | None = None) -> Sandbox:
     """Extract sandbox instance from tool runtime.
 
     DEPRECATED: Use ensure_sandbox_initialized() for lazy initialization support.
@@ -1048,7 +1060,8 @@ def sandbox_from_runtime(runtime: Runtime | None = None) -> Sandbox:
     return sandbox
 
 
-def ensure_sandbox_initialized(runtime: Runtime | None = None) -> Sandbox:
+# 确保沙盒已初始化: 惰性获取并初始化沙盒实例
+def ensure_sandbox_initialized(runtime: ToolRuntime[ContextT, ThreadState] | None = None) -> Sandbox:
     """Ensure sandbox is initialized, acquiring lazily if needed.
 
     On first call, acquires a sandbox from the provider and stores it in runtime state.
@@ -1107,7 +1120,7 @@ def ensure_sandbox_initialized(runtime: Runtime | None = None) -> Sandbox:
     return sandbox
 
 
-def ensure_thread_directories_exist(runtime: Runtime | None) -> None:
+def ensure_thread_directories_exist(runtime: ToolRuntime[ContextT, ThreadState] | None) -> None:
     """Ensure thread data directories (workspace, uploads, outputs) exist.
 
     This function is called lazily when any sandbox tool is first used.
@@ -1220,8 +1233,9 @@ def _truncate_ls_output(output: str, max_chars: int) -> str:
     return f"{output[:kept]}{marker}"
 
 
+# bash 工具: 执行 shell 命令, 处理虚拟路径转换、安全验证、输出截断
 @tool("bash", parse_docstring=True)
-def bash_tool(runtime: Runtime, description: str, command: str) -> str:
+def bash_tool(runtime: ToolRuntime[ContextT, ThreadState], description: str, command: str) -> str:
     """Execute a bash command in a Linux environment.
 
 
@@ -1269,8 +1283,9 @@ def bash_tool(runtime: Runtime, description: str, command: str) -> str:
         return f"Error: Unexpected error executing command: {_sanitize_error(e, runtime)}"
 
 
+# 目录列表工具: 树形格式显示, 最多 2 层深度
 @tool("ls", parse_docstring=True)
-def ls_tool(runtime: Runtime, description: str, path: str) -> str:
+def ls_tool(runtime: ToolRuntime[ContextT, ThreadState], description: str, path: str) -> str:
     """List the contents of a directory up to 2 levels deep in tree format.
 
     Args:
@@ -1316,9 +1331,10 @@ def ls_tool(runtime: Runtime, description: str, path: str) -> str:
         return f"Error: Unexpected error listing directory: {_sanitize_error(e, runtime)}"
 
 
+# glob 模式搜索工具: 按模式匹配文件路径
 @tool("glob", parse_docstring=True)
 def glob_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     pattern: str,
     path: str,
@@ -1366,9 +1382,10 @@ def glob_tool(
         return f"Error: Unexpected error searching paths: {_sanitize_error(e, runtime)}"
 
 
+# 文件内容搜索工具: grep 模式匹配, 支持上下文行显示
 @tool("grep", parse_docstring=True)
 def grep_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     pattern: str,
     path: str,
@@ -1436,9 +1453,10 @@ def grep_tool(
         return f"Error: Unexpected error searching file contents: {_sanitize_error(e, runtime)}"
 
 
+# 文件读取工具: 支持行范围, 自动截断过长输出
 @tool("read_file", parse_docstring=True)
 def read_file_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     path: str,
     start_line: int | None = None,
@@ -1491,9 +1509,10 @@ def read_file_tool(
         return f"Error: Unexpected error reading file: {_sanitize_error(e, runtime)}"
 
 
+# 文件写入工具: 支持追加模式, 自动创建目录
 @tool("write_file", parse_docstring=True)
 def write_file_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     path: str,
     content: str,
@@ -1531,9 +1550,10 @@ def write_file_tool(
         return f"Error: Unexpected error writing file: {_sanitize_error(e, runtime)}"
 
 
+# 字符串替换工具: 在文件中查找并替换子串, 同路径操作串行化
 @tool("str_replace", parse_docstring=True)
 def str_replace_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     description: str,
     path: str,
     old_str: str,

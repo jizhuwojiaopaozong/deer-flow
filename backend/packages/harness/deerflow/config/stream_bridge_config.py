@@ -1,3 +1,4 @@
+# 中文说明：流桥接配置，连接代理工作线程和 SSE 端点
 """Configuration for stream bridge."""
 
 from typing import Literal
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 StreamBridgeType = Literal["memory", "redis"]
 
 
+# 中文说明：流桥接配置类，支持 memory 和 redis 两种后端
 class StreamBridgeConfig(BaseModel):
     """Configuration for the stream bridge that connects agent workers to SSE endpoints."""
 

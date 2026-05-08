@@ -1,3 +1,4 @@
+# 技能管理工具: 支持创建、编辑、补丁、删除自定义技能及其关联文件
 """Tool for creating and evolving custom skills."""
 
 from __future__ import annotations
@@ -7,21 +8,23 @@ import logging
 from typing import Any
 from weakref import WeakValueDictionary
 
-from langchain.tools import tool
+from langchain.tools import ToolRuntime, tool
+from langgraph.typing import ContextT
 
 from deerflow.agents.lead_agent.prompt import refresh_skills_system_prompt_cache_async
+from deerflow.agents.thread_state import ThreadState
 from deerflow.mcp.tools import _make_sync_tool_wrapper
 from deerflow.skills.security_scanner import scan_skill_content
 from deerflow.skills.storage import get_or_new_skill_storage
 from deerflow.skills.storage.skill_storage import SkillStorage
 from deerflow.skills.types import SKILL_MD_FILE
-from deerflow.tools.types import Runtime
 
 logger = logging.getLogger(__name__)
 
 _skill_locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
 
 
+# 获取技能级别的异步锁: 防止并发操作同一技能
 def _get_lock(name: str) -> asyncio.Lock:
     lock = _skill_locks.get(name)
     if lock is None:
@@ -30,7 +33,8 @@ def _get_lock(name: str) -> asyncio.Lock:
     return lock
 
 
-def _get_thread_id(runtime: Runtime | None) -> str | None:
+# 获取当前线程 ID: 用于记录操作历史
+def _get_thread_id(runtime: ToolRuntime[ContextT, ThreadState] | None) -> str | None:
     if runtime is None:
         return None
     if runtime.context and runtime.context.get("thread_id"):
@@ -38,6 +42,7 @@ def _get_thread_id(runtime: Runtime | None) -> str | None:
     return runtime.config.get("configurable", {}).get("thread_id")
 
 
+# 构建操作历史记录: 包含动作、作者、文件路径和安全扫描结果
 def _history_record(*, action: str, file_path: str, prev_content: str | None, new_content: str | None, thread_id: str | None, scanner: dict[str, Any]) -> dict[str, Any]:
     return {
         "action": action,
@@ -50,6 +55,7 @@ def _history_record(*, action: str, file_path: str, prev_content: str | None, ne
     }
 
 
+# 安全扫描: 检查内容是否安全, 可执行内容需通过更严格的检查
 async def _scan_or_raise(content: str, *, executable: bool, location: str) -> dict[str, str]:
     result = await scan_skill_content(content, executable=executable, location=location)
     if result.decision == "block":
@@ -63,8 +69,9 @@ async def _to_thread(func, /, *args, **kwargs):
     return await asyncio.to_thread(func, *args, **kwargs)
 
 
+# 技能管理核心实现: 处理 create/edit/patch/delete/write_file/remove_file 操作
 async def _skill_manage_impl(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     action: str,
     name: str,
     content: str | None = None,
@@ -201,9 +208,10 @@ async def _skill_manage_impl(
         raise ValueError(f"Unsupported action '{action}'.")
 
 
+# 技能管理工具入口: LangChain 工具接口, 委托给核心实现
 @tool("skill_manage", parse_docstring=True)
 async def skill_manage_tool(
-    runtime: Runtime,
+    runtime: ToolRuntime[ContextT, ThreadState],
     action: str,
     name: str,
     content: str | None = None,

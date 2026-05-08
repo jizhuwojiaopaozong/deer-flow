@@ -1,3 +1,4 @@
+# 中文说明：基于 SQLAlchemy 的反馈存储实现
 """SQLAlchemy-backed feedback storage.
 
 Each method acquires its own short-lived session.
@@ -15,6 +16,7 @@ from deerflow.persistence.feedback.model import FeedbackRow
 from deerflow.runtime.user_context import AUTO, _AutoSentinel, resolve_user_id
 
 
+# 中文说明：反馈仓库，提供反馈的增删改查和聚合统计
 class FeedbackRepository:
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -122,6 +124,7 @@ class FeedbackRepository:
             await session.commit()
             return True
 
+    # 中文说明：创建或更新反馈，基于 (thread_id, run_id, user_id) 唯一键
     async def upsert(
         self,
         *,

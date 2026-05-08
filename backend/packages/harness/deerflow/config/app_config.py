@@ -1,3 +1,5 @@
+# 应用配置模块: 从 config.yaml 加载 AppConfig, 支持环境变量解析、mtime 自动重载、运行时覆盖
+
 import logging
 import os
 from collections.abc import Mapping
@@ -42,6 +44,7 @@ CONFIG_FILE_DATABASE_DEFAULTS = {
 }
 
 
+# LLM 熔断器配置: 连续失败达到阈值后暂停调用, 超时后自动恢复
 class CircuitBreakerConfig(BaseModel):
     """Configuration for the LLM Circuit Breaker."""
 
@@ -49,6 +52,7 @@ class CircuitBreakerConfig(BaseModel):
     recovery_timeout_sec: int = Field(default=60, description="Time in seconds before attempting to recover the circuit")
 
 
+# 返回单体仓库兼容的 config.yaml 候选路径 (backend/ 和 repo root)
 def _legacy_config_candidates() -> tuple[Path, ...]:
     """Return source-tree config.yaml locations for monorepo compatibility."""
     backend_dir = Path(__file__).resolve().parents[4]
@@ -56,12 +60,14 @@ def _legacy_config_candidates() -> tuple[Path, ...]:
     return (backend_dir / "config.yaml", repo_root / "config.yaml")
 
 
+# 将 config.yaml 的 log_level 字符串映射为 logging 级别常量
 def logging_level_from_config(name: str | None) -> int:
     """Map ``config.yaml`` ``log_level`` string to a :mod:`logging` level constant."""
     mapping = logging.getLevelNamesMapping()
     return mapping.get((name or "info").strip().upper(), logging.INFO)
 
 
+# 应用日志级别到 deerflow 和 app 日志器层级, 不影响第三方库
 def apply_logging_level(name: str | None) -> None:
     """Resolve *name* to a logging level and apply it to the ``deerflow``/``app`` logger hierarchies.
 
@@ -80,6 +86,7 @@ def apply_logging_level(name: str | None) -> None:
             handler.setLevel(level)
 
 
+# 应用主配置类: 包含模型、沙盒、工具、技能、记忆、摘要、子代理等所有配置段
 class AppConfig(BaseModel):
     """Config for the DeerFlow application"""
 
@@ -108,6 +115,7 @@ class AppConfig(BaseModel):
     checkpointer: CheckpointerConfig | None = Field(default=None, description="Checkpointer configuration")
     stream_bridge: StreamBridgeConfig | None = Field(default=None, description="Stream bridge configuration")
 
+    # 解析配置文件路径: 参数 -> 环境变量 -> 项目根目录 -> 旧版兼容路径
     @classmethod
     def resolve_config_path(cls, config_path: str | None = None) -> Path:
         """Resolve the config file path.
@@ -138,6 +146,7 @@ class AppConfig(BaseModel):
                     return path
             raise FileNotFoundError("`config.yaml` file not found in the project root or legacy backend/repository root locations")
 
+    # 从 YAML 文件加载配置: 解析环境变量、检查版本、加载扩展配置
     @classmethod
     def from_file(cls, config_path: str | None = None) -> Self:
         """Load config from YAML file.
@@ -173,6 +182,7 @@ class AppConfig(BaseModel):
         cls._apply_singleton_configs(result, acp_agents)
         return result
 
+    # 校验 ACP 代理配置
     @classmethod
     def _validate_acp_agents(
         cls,
@@ -182,6 +192,7 @@ class AppConfig(BaseModel):
             config_data = {}
         return {name: ACPAgentConfig(**cfg) for name, cfg in config_data.items()}
 
+    # 将配置应用到各模块的全局单例, 检查点配置变更时重置运行时单例
     @classmethod
     def _apply_singleton_configs(cls, config: Self, acp_agents: dict[str, ACPAgentConfig]) -> None:
         from deerflow.config.checkpointer_config import get_checkpointer_config
@@ -208,6 +219,7 @@ class AppConfig(BaseModel):
             reset_checkpointer()
             reset_store()
 
+    # 应用数据库默认配置 (SQLite 后端)
     @classmethod
     def _apply_database_defaults(cls, config_data: dict[str, Any]) -> None:
         """Apply config.yaml defaults for persistence when the section is absent."""
@@ -220,6 +232,7 @@ class AppConfig(BaseModel):
         for key, value in CONFIG_FILE_DATABASE_DEFAULTS.items():
             database_config.setdefault(key, value)
 
+    # 检查配置版本: 用户版本低于示例版本时输出警告
     @classmethod
     def _check_config_version(cls, config_data: dict, config_path: Path) -> None:
         """Check if the user's config.yaml is outdated compared to config.example.yaml.
@@ -265,6 +278,7 @@ class AppConfig(BaseModel):
                 example_version,
             )
 
+    # 递归解析配置中的环境变量 (以 $ 开头的值)
     @classmethod
     def resolve_env_variables(cls, config: Any) -> Any:
         """Recursively resolve environment variables in the config.
@@ -290,6 +304,7 @@ class AppConfig(BaseModel):
             return [cls.resolve_env_variables(item) for item in config]
         return config
 
+    # 按名称获取模型配置
     def get_model_config(self, name: str) -> ModelConfig | None:
         """Get the model config by name.
 
@@ -301,6 +316,7 @@ class AppConfig(BaseModel):
         """
         return next((model for model in self.models if model.name == name), None)
 
+    # 按名称获取工具配置
     def get_tool_config(self, name: str) -> ToolConfig | None:
         """Get the tool config by name.
 
@@ -312,6 +328,7 @@ class AppConfig(BaseModel):
         """
         return next((tool for tool in self.tools if tool.name == name), None)
 
+    # 按名称获取工具组配置
     def get_tool_group_config(self, name: str) -> ToolGroupConfig | None:
         """Get the tool group config by name.
 
@@ -335,6 +352,7 @@ _current_app_config: ContextVar[AppConfig | None] = ContextVar("deerflow_current
 _current_app_config_stack: ContextVar[tuple[AppConfig | None, ...]] = ContextVar("deerflow_current_app_config_stack", default=())
 
 
+# 获取配置文件的修改时间
 def _get_config_mtime(config_path: Path) -> float | None:
     """Get the modification time of a config file if it exists."""
     try:
@@ -343,6 +361,7 @@ def _get_config_mtime(config_path: Path) -> float | None:
         return None
 
 
+# 从磁盘加载配置并刷新缓存元数据
 def _load_and_cache_app_config(config_path: str | None = None) -> AppConfig:
     """Load config from disk and refresh cache metadata."""
     global _app_config, _app_config_path, _app_config_mtime, _app_config_is_custom
@@ -355,6 +374,7 @@ def _load_and_cache_app_config(config_path: str | None = None) -> AppConfig:
     return _app_config
 
 
+# 获取配置单例: 自动检测文件路径或 mtime 变化并重新加载
 def get_app_config() -> AppConfig:
     """Get the DeerFlow config instance.
 
@@ -387,6 +407,7 @@ def get_app_config() -> AppConfig:
     return _app_config
 
 
+# 强制重新加载配置
 def reload_app_config(config_path: str | None = None) -> AppConfig:
     """Reload the config from file and update the cached instance.
 
@@ -403,6 +424,7 @@ def reload_app_config(config_path: str | None = None) -> AppConfig:
     return _load_and_cache_app_config(config_path)
 
 
+# 重置配置缓存: 下次 get_app_config() 将从文件重新加载
 def reset_app_config() -> None:
     """Reset the cached config instance.
 
@@ -417,6 +439,7 @@ def reset_app_config() -> None:
     _app_config_is_custom = False
 
 
+# 注入自定义配置实例 (用于测试)
 def set_app_config(config: AppConfig) -> None:
     """Set a custom config instance.
 
@@ -432,11 +455,13 @@ def set_app_config(config: AppConfig) -> None:
     _app_config_is_custom = True
 
 
+# 查看当前运行时作用域的配置覆盖 (不弹出)
 def peek_current_app_config() -> AppConfig | None:
     """Return the runtime-scoped AppConfig override, if one is active."""
     return _current_app_config.get()
 
 
+# 压入运行时作用域的配置覆盖
 def push_current_app_config(config: AppConfig) -> None:
     """Push a runtime-scoped AppConfig override for the current execution context."""
     stack = _current_app_config_stack.get()
@@ -444,6 +469,7 @@ def push_current_app_config(config: AppConfig) -> None:
     _current_app_config.set(config)
 
 
+# 弹出运行时作用域的配置覆盖
 def pop_current_app_config() -> None:
     """Pop the latest runtime-scoped AppConfig override for the current execution context."""
     stack = _current_app_config_stack.get()

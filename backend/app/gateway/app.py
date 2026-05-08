@@ -1,3 +1,4 @@
+# 中文说明：Gateway 应用主模块，负责创建 FastAPI 实例、配置中间件、注册路由、管理应用生命周期
 import asyncio
 import logging
 import os
@@ -49,6 +50,7 @@ logger = logging.getLogger(__name__)
 _SHUTDOWN_HOOK_TIMEOUT_SECONDS = 5.0
 
 
+# 中文说明：启动钩子，首次启动时提示创建管理员，后续启动时迁移孤立线程到管理员账户
 async def _ensure_admin_user(app: FastAPI) -> None:
     """Startup hook: handle first boot and migrate orphan threads otherwise.
 
@@ -121,6 +123,7 @@ async def _ensure_admin_user(app: FastAPI) -> None:
             logger.exception("LangGraph thread migration failed (non-fatal)")
 
 
+# 中文说明：分页异步迭代器，遍历 LangGraph Store 命名空间中的所有条目
 async def _iter_store_items(store, namespace, *, page_size: int = 500):
     """Paginated async iterator over a LangGraph store namespace.
 
@@ -141,6 +144,7 @@ async def _iter_store_items(store, namespace, *, page_size: int = 500):
         offset += page_size
 
 
+# 中文说明：将 LangGraph Store 中没有 user_id 的孤立线程迁移到指定管理员账户
 async def _migrate_orphaned_threads(store, admin_user_id: str) -> int:
     """Migrate LangGraph store threads with no user_id to the given admin.
 
@@ -158,6 +162,7 @@ async def _migrate_orphaned_threads(store, admin_user_id: str) -> int:
     return migrated
 
 
+# 中文说明：应用生命周期管理器，负责配置加载、运行时初始化、管理员检查和渠道服务启停
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler."""
@@ -212,6 +217,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Shutting down API Gateway")
 
 
+# 中文说明：创建并配置 FastAPI 应用实例，注册中间件和路由
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application.
 

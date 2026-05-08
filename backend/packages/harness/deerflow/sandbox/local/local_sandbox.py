@@ -1,3 +1,4 @@
+# 本地沙盒实现: 使用本地文件系统模拟沙盒环境, 支持容器路径映射和读写隔离
 import errno
 import ntpath
 import os
@@ -12,6 +13,7 @@ from deerflow.sandbox.sandbox import Sandbox
 from deerflow.sandbox.search import GrepMatch, find_glob_matches, find_grep_matches
 
 
+# 路径映射: 定义容器路径到本地路径的映射关系, 支持只读标记
 @dataclass(frozen=True)
 class PathMapping:
     """A path mapping from a container path to a local path with optional read-only flag."""
@@ -21,34 +23,33 @@ class PathMapping:
     read_only: bool = False
 
 
+# 解析后的路径: 包含本地路径和匹配到的映射关系
 class ResolvedPath(NamedTuple):
     path: str
     mapping: PathMapping | None
 
 
+# 本地沙盒类: 实现沙盒接口, 提供命令执行、文件读写、路径映射等功能
 class LocalSandbox(Sandbox):
+    # 获取 shell 可执行文件名称: 从路径中提取文件名
     @staticmethod
     def _shell_name(shell: str) -> str:
         """Return the executable name for a shell path or command."""
         return shell.replace("\\", "/").rsplit("/", 1)[-1].lower()
 
+    # 判断是否为 PowerShell: 用于 Windows 环境下的命令参数适配
     @staticmethod
     def _is_powershell(shell: str) -> bool:
         """Return whether the selected shell is a PowerShell executable."""
         return LocalSandbox._shell_name(shell) in {"powershell", "powershell.exe", "pwsh", "pwsh.exe"}
 
+    # 判断是否为 cmd.exe: 用于 Windows 环境下的命令参数适配
     @staticmethod
     def _is_cmd_shell(shell: str) -> bool:
         """Return whether the selected shell is cmd.exe."""
         return LocalSandbox._shell_name(shell) in {"cmd", "cmd.exe"}
 
-    @staticmethod
-    def _is_msys_shell(shell: str) -> bool:
-        """Return whether the selected shell is a Git Bash/MSYS shell."""
-        normalized = shell.replace("\\", "/").lower()
-        shell_name = LocalSandbox._shell_name(shell)
-        return shell_name in {"sh.exe", "bash.exe"} and any(part in normalized for part in ("/git/", "/mingw", "/msys"))
-
+    # 查找可用 shell: 按优先级依次检测候选 shell 是否可用
     @staticmethod
     def _find_first_available_shell(candidates: tuple[str, ...]) -> str | None:
         """Return the first executable shell path or command found from candidates."""
@@ -79,6 +80,7 @@ class LocalSandbox(Sandbox):
         # reverse-resolves paths in agent-authored content.
         self._agent_written_paths: set[str] = set()
 
+    # 检查路径是否只读: 在嵌套映射中选择最精确的匹配
     def _is_read_only_path(self, resolved_path: str) -> bool:
         """Check if a resolved path is under a read-only mount.
 
@@ -104,6 +106,7 @@ class LocalSandbox(Sandbox):
 
         return best_mapping.read_only
 
+    # 查找路径映射: 按容器路径长度降序匹配, 返回映射和相对路径
     def _find_path_mapping(self, path: str) -> tuple[PathMapping, str] | None:
         path_str = str(path)
 
@@ -147,9 +150,11 @@ class LocalSandbox(Sandbox):
 
         return ResolvedPath(str(resolved_path), mapping)
 
+    # 解析容器路径为本地路径: 简化接口, 仅返回路径字符串
     def _resolve_path(self, path: str) -> str:
         return self._resolve_path_with_mapping(path).path
 
+    # 判断解析后路径是否只读: 结合映射配置和嵌套路径检查
     def _is_resolved_path_read_only(self, resolved: ResolvedPath) -> bool:
         return bool(resolved.mapping and resolved.mapping.read_only) or self._is_read_only_path(resolved.path)
 
@@ -213,6 +218,7 @@ class LocalSandbox(Sandbox):
 
         return result
 
+    # 命令中的路径解析: 将命令字符串中的容器路径替换为本地路径
     def _resolve_paths_in_command(self, command: str) -> str:
         """
         Resolve container paths to local paths in a command string.
@@ -278,6 +284,7 @@ class LocalSandbox(Sandbox):
 
         return pattern.sub(replace_match, content)
 
+    # 获取可用 shell: 自动检测 zsh/bash/sh, Windows 回退到 PowerShell/cmd
     @staticmethod
     def _get_shell() -> str:
         """Detect available shell executable with fallback."""
@@ -304,25 +311,19 @@ class LocalSandbox(Sandbox):
 
         raise RuntimeError("No suitable shell executable found. Tried /bin/zsh, /bin/bash, /bin/sh, and `sh` on PATH.")
 
+    # 执行 bash 命令: 路径转换、shell 检测、输出截断和路径反向解析
     def execute_command(self, command: str) -> str:
         # Resolve container paths in command before execution
         resolved_command = self._resolve_paths_in_command(command)
         shell = self._get_shell()
 
         if os.name == "nt":
-            env = None
             if self._is_powershell(shell):
                 args = [shell, "-NoProfile", "-Command", resolved_command]
             elif self._is_cmd_shell(shell):
                 args = [shell, "/c", resolved_command]
             else:
                 args = [shell, "-c", resolved_command]
-                if self._is_msys_shell(shell):
-                    env = {
-                        **os.environ,
-                        "MSYS_NO_PATHCONV": "1",
-                        "MSYS2_ARG_CONV_EXCL": "*",
-                    }
 
             result = subprocess.run(
                 args,
@@ -330,7 +331,6 @@ class LocalSandbox(Sandbox):
                 capture_output=True,
                 text=True,
                 timeout=600,
-                env=env,
             )
         else:
             args = [shell, "-c", resolved_command]
@@ -351,6 +351,7 @@ class LocalSandbox(Sandbox):
         # Reverse resolve local paths back to container paths in output
         return self._reverse_resolve_paths_in_output(final_output)
 
+    # 列出目录内容: 解析路径、遍历目录、反向解析结果路径
     def list_dir(self, path: str, max_depth=2) -> list[str]:
         resolved_path = self._resolve_path(path)
         entries = list_dir(resolved_path, max_depth)
@@ -363,6 +364,7 @@ class LocalSandbox(Sandbox):
             result.append(f"{reversed_entry}/" if is_dir and not reversed_entry.endswith("/") else reversed_entry)
         return result
 
+    # 读取文件: 仅对代理写入的文件进行路径反向解析
     def read_file(self, path: str) -> str:
         resolved_path = self._resolve_path(path)
         try:
@@ -379,6 +381,7 @@ class LocalSandbox(Sandbox):
             # Re-raise with the original path for clearer error messages, hiding internal resolved paths
             raise type(e)(e.errno, e.strerror, path) from None
 
+    # 写入文件: 解析路径和内容中的容器路径, 检查只读权限, 创建必要目录
     def write_file(self, path: str, content: str, append: bool = False) -> None:
         resolved = self._resolve_path_with_mapping(path)
         resolved_path = resolved.path
@@ -402,11 +405,13 @@ class LocalSandbox(Sandbox):
             # Re-raise with the original path for clearer error messages, hiding internal resolved paths
             raise type(e)(e.errno, e.strerror, path) from None
 
+    # glob 文件匹配: 按模式搜索文件, 支持目录过滤和结果数量限制
     def glob(self, path: str, pattern: str, *, include_dirs: bool = False, max_results: int = 200) -> tuple[list[str], bool]:
         resolved_path = Path(self._resolve_path(path))
         matches, truncated = find_glob_matches(resolved_path, pattern, include_dirs=include_dirs, max_results=max_results)
         return [self._reverse_resolve_path(match) for match in matches], truncated
 
+    # grep 搜索: 在文件中搜索匹配内容, 支持正则、字面量和大小写选项
     def grep(
         self,
         path: str,
@@ -435,6 +440,7 @@ class LocalSandbox(Sandbox):
             for match in matches
         ], truncated
 
+    # 更新二进制文件: 直接写入字节内容, 用于图片等非文本文件
     def update_file(self, path: str, content: bytes) -> None:
         resolved = self._resolve_path_with_mapping(path)
         resolved_path = resolved.path

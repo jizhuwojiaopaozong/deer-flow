@@ -1,5 +1,7 @@
 """Security helpers for sandbox capability gating."""
 
+# 沙盒安全工具: 检查是否使用本地沙盒、是否允许宿主机 bash 执行
+
 from deerflow.config import get_app_config
 
 _LOCAL_SANDBOX_PROVIDER_MARKERS = (

@@ -1,3 +1,4 @@
+# 中文说明：技能文件解析器，从 SKILL.md 的 YAML frontmatter 中提取元数据
 import logging
 import re
 from pathlib import Path
@@ -9,6 +10,7 @@ from .types import SKILL_MD_FILE, Skill, SkillCategory
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：解析技能的 allowed-tools 配置字段
 def parse_allowed_tools(raw: object, skill_file: Path) -> list[str] | None:
     """Parse the optional allowed-tools frontmatter field.
 
@@ -32,6 +34,7 @@ def parse_allowed_tools(raw: object, skill_file: Path) -> list[str] | None:
     return allowed_tools
 
 
+# 中文说明：解析单个 SKILL.md 文件并返回 Skill 对象
 def parse_skill_file(skill_file: Path, category: SkillCategory, relative_path: Path | None = None) -> Skill | None:
     """Parse a SKILL.md file and extract metadata.
 

@@ -1,3 +1,4 @@
+# 中文说明：渠道服务模块，管理所有 IM 渠道的生命周期
 """ChannelService — manages the lifecycle of all IM channels."""
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ _CHANNELS_LANGGRAPH_URL_ENV = "DEER_FLOW_CHANNELS_LANGGRAPH_URL"
 _CHANNELS_GATEWAY_URL_ENV = "DEER_FLOW_CHANNELS_GATEWAY_URL"
 
 
+# 中文说明：解析服务URL，优先使用配置值，其次环境变量，最后默认值
 def _resolve_service_url(config: dict[str, Any], config_key: str, env_key: str, default: str) -> str:
     value = config.pop(config_key, None)
     if isinstance(value, str) and value.strip():
@@ -52,6 +54,7 @@ def _resolve_service_url(config: dict[str, Any], config_key: str, env_key: str, 
     return default
 
 
+# 中文说明：渠道服务类，读取配置实例化并启动所有已启用的 IM 渠道
 class ChannelService:
     """Manages the lifecycle of all configured IM channels.
 
@@ -79,6 +82,7 @@ class ChannelService:
         self._config = config
         self._running = False
 
+    # 中文说明：从应用配置创建 ChannelService 实例的工厂方法
     @classmethod
     def from_app_config(cls, app_config: AppConfig | None = None) -> ChannelService:
         """Create a ChannelService from the application config."""
@@ -93,6 +97,7 @@ class ChannelService:
             channels_config = extra["channels"]
         return cls(channels_config=channels_config)
 
+    # 中文说明：启动调度管理器和所有已启用的渠道
     async def start(self) -> None:
         """Start the manager and all enabled channels."""
         if self._running:
@@ -121,6 +126,7 @@ class ChannelService:
         self._running = True
         logger.info("ChannelService started with channels: %s", list(self._channels.keys()))
 
+    # 中文说明：停止所有渠道和调度管理器
     async def stop(self) -> None:
         """Stop all channels and the manager."""
         for name, channel in list(self._channels.items()):
@@ -135,6 +141,7 @@ class ChannelService:
         self._running = False
         logger.info("ChannelService stopped")
 
+    # 中文说明：重启指定渠道，成功返回 True
     async def restart_channel(self, name: str) -> bool:
         """Restart a specific channel. Returns True if successful."""
         if name in self._channels:
@@ -151,6 +158,7 @@ class ChannelService:
 
         return await self._start_channel(name, config)
 
+    # 中文说明：实例化并启动单个渠道
     async def _start_channel(self, name: str, config: dict[str, Any]) -> bool:
         """Instantiate and start a single channel."""
         import_path = _CHANNEL_REGISTRY.get(name)
@@ -181,6 +189,7 @@ class ChannelService:
             logger.exception("Failed to start channel %s", name)
             return False
 
+    # 中文说明：返回所有渠道的状态信息
     def get_status(self) -> dict[str, Any]:
         """Return status information for all channels."""
         channels_status = {}
@@ -207,11 +216,13 @@ class ChannelService:
 _channel_service: ChannelService | None = None
 
 
+# 中文说明：获取全局单例 ChannelService 实例
 def get_channel_service() -> ChannelService | None:
     """Get the singleton ChannelService instance (if started)."""
     return _channel_service
 
 
+# 中文说明：创建并启动全局 ChannelService
 async def start_channel_service(app_config: AppConfig | None = None) -> ChannelService:
     """Create and start the global ChannelService from app config."""
     global _channel_service
@@ -222,6 +233,7 @@ async def start_channel_service(app_config: AppConfig | None = None) -> ChannelS
     return _channel_service
 
 
+# 中文说明：停止全局 ChannelService
 async def stop_channel_service() -> None:
     """Stop the global ChannelService."""
     global _channel_service

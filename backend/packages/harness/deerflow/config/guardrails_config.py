@@ -1,8 +1,10 @@
+# 中文说明：工具调用前的授权守卫配置
 """Configuration for pre-tool-call authorization."""
 
 from pydantic import BaseModel, Field
 
 
+# 中文说明：守卫提供者配置，指定提供者类路径和特定参数
 class GuardrailProviderConfig(BaseModel):
     """Configuration for a guardrail provider."""
 
@@ -10,6 +12,7 @@ class GuardrailProviderConfig(BaseModel):
     config: dict = Field(default_factory=dict, description="Provider-specific settings passed as kwargs")
 
 
+# 中文说明：守卫总配置，控制是否启用授权检查和失败策略
 class GuardrailsConfig(BaseModel):
     """Configuration for pre-tool-call authorization.
 

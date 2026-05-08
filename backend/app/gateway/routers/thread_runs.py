@@ -1,3 +1,4 @@
+# 中文说明：运行端点，提供创建、流式、等待、取消运行以及消息/事件/token用量查询
 """Runs endpoints — create, stream, wait, cancel.
 
 Implements the LangGraph Platform runs API on top of
@@ -33,6 +34,7 @@ router = APIRouter(prefix="/api/threads", tags=["runs"])
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：运行创建请求模型，包含智能体ID、输入、配置、流模式等参数
 class RunCreateRequest(BaseModel):
     assistant_id: str | None = Field(default=None, description="Agent / assistant to use")
     input: dict[str, Any] | None = Field(default=None, description="Graph input (e.g. {messages: [...]})")
@@ -56,6 +58,7 @@ class RunCreateRequest(BaseModel):
     feedback_keys: list[str] | None = Field(default=None, description="LangSmith feedback keys")
 
 
+# 中文说明：运行响应模型
 class RunResponse(BaseModel):
     run_id: str
     thread_id: str
@@ -73,6 +76,7 @@ class RunResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+# 中文说明：将 RunRecord 转换为 RunResponse
 def _record_to_response(record: RunRecord) -> RunResponse:
     return RunResponse(
         run_id=record.run_id,
@@ -94,6 +98,7 @@ def _record_to_response(record: RunRecord) -> RunResponse:
 
 @router.post("/{thread_id}/runs", response_model=RunResponse)
 @require_permission("runs", "create", owner_check=True, require_existing=True)
+# 中文说明：创建后台运行（立即返回）
 async def create_run(thread_id: str, body: RunCreateRequest, request: Request) -> RunResponse:
     """Create a background run (returns immediately)."""
     record = await start_run(body, thread_id, request)
@@ -102,6 +107,7 @@ async def create_run(thread_id: str, body: RunCreateRequest, request: Request) -
 
 @router.post("/{thread_id}/runs/stream")
 @require_permission("runs", "create", owner_check=True, require_existing=True)
+# 中文说明：创建运行并通过 SSE 流式输出事件
 async def stream_run(thread_id: str, body: RunCreateRequest, request: Request) -> StreamingResponse:
     """Create a run and stream events via SSE.
 
@@ -130,6 +136,7 @@ async def stream_run(thread_id: str, body: RunCreateRequest, request: Request) -
 
 @router.post("/{thread_id}/runs/wait", response_model=dict)
 @require_permission("runs", "create", owner_check=True, require_existing=True)
+# 中文说明：创建运行并阻塞等待完成，返回最终状态
 async def wait_run(thread_id: str, body: RunCreateRequest, request: Request) -> dict:
     """Create a run and block until it completes, returning the final state."""
     record = await start_run(body, thread_id, request)
@@ -156,6 +163,7 @@ async def wait_run(thread_id: str, body: RunCreateRequest, request: Request) -> 
 
 @router.get("/{thread_id}/runs", response_model=list[RunResponse])
 @require_permission("runs", "read", owner_check=True)
+# 中文说明：列出线程的所有运行记录
 async def list_runs(thread_id: str, request: Request) -> list[RunResponse]:
     """List all runs for a thread."""
     run_mgr = get_run_manager(request)
@@ -165,6 +173,7 @@ async def list_runs(thread_id: str, request: Request) -> list[RunResponse]:
 
 @router.get("/{thread_id}/runs/{run_id}", response_model=RunResponse)
 @require_permission("runs", "read", owner_check=True)
+# 中文说明：获取指定运行的详情
 async def get_run(thread_id: str, run_id: str, request: Request) -> RunResponse:
     """Get details of a specific run."""
     run_mgr = get_run_manager(request)
@@ -176,6 +185,7 @@ async def get_run(thread_id: str, run_id: str, request: Request) -> RunResponse:
 
 @router.post("/{thread_id}/runs/{run_id}/cancel")
 @require_permission("runs", "cancel", owner_check=True, require_existing=True)
+# 中文说明：取消运行中的或待处理的运行，支持中断和回滚两种模式
 async def cancel_run(
     thread_id: str,
     run_id: str,
@@ -214,6 +224,7 @@ async def cancel_run(
 
 @router.get("/{thread_id}/runs/{run_id}/join")
 @require_permission("runs", "read", owner_check=True)
+# 中文说明：加入已有运行的 SSE 流
 async def join_run(thread_id: str, run_id: str, request: Request) -> StreamingResponse:
     """Join an existing run's SSE stream."""
     bridge = get_stream_bridge(request)
@@ -283,6 +294,7 @@ async def stream_existing_run(
 
 @router.get("/{thread_id}/messages")
 @require_permission("runs", "read", owner_check=True)
+# 中文说明：返回线程跨所有运行的可显示消息，附加反馈信息
 async def list_thread_messages(
     thread_id: str,
     request: Request,
@@ -328,6 +340,7 @@ async def list_thread_messages(
 
 @router.get("/{thread_id}/runs/{run_id}/messages")
 @require_permission("runs", "read", owner_check=True)
+# 中文说明：返回指定运行的分页消息
 async def list_run_messages(
     thread_id: str,
     run_id: str,
@@ -370,6 +383,7 @@ async def list_run_events(
 
 @router.get("/{thread_id}/token-usage")
 @require_permission("threads", "read", owner_check=True)
+# 中文说明：线程级别的 token 用量聚合统计
 async def thread_token_usage(thread_id: str, request: Request) -> dict:
     """Thread-level token usage aggregation."""
     run_store = get_run_store(request)

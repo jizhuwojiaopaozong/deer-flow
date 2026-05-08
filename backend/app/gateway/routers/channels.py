@@ -1,3 +1,4 @@
+# 中文说明：IM 渠道路由，提供渠道状态查询和重启功能
 """Gateway router for IM channel management."""
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/channels", tags=["channels"])
 
 
+# 中文说明：渠道状态响应模型
 class ChannelStatusResponse(BaseModel):
     service_running: bool
     channels: dict[str, dict]
@@ -23,6 +25,7 @@ class ChannelRestartResponse(BaseModel):
 
 
 @router.get("/", response_model=ChannelStatusResponse)
+# 中文说明：获取所有 IM 渠道的状态
 async def get_channels_status() -> ChannelStatusResponse:
     """Get the status of all IM channels."""
     from app.channels.service import get_channel_service
@@ -35,6 +38,7 @@ async def get_channels_status() -> ChannelStatusResponse:
 
 
 @router.post("/{name}/restart", response_model=ChannelRestartResponse)
+# 中文说明：重启指定的 IM 渠道
 async def restart_channel(name: str) -> ChannelRestartResponse:
     """Restart a specific IM channel."""
     from app.channels.service import get_channel_service

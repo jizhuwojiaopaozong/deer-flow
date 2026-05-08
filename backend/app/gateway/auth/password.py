@@ -1,3 +1,4 @@
+# 中文说明：密码哈希工具模块，支持版本化哈希格式（v1 纯 bcrypt / v2 SHA-256+bcrypt），自动透明升级
 """Password hashing utilities with versioned hash format.
 
 Hash format: ``$dfv<N>$<bcrypt_hash>`` where ``<N>`` is the version.
@@ -29,12 +30,14 @@ def _pre_hash_v2(password: str) -> bytes:
     return base64.b64encode(hashlib.sha256(password.encode("utf-8")).digest())
 
 
+# 中文说明：哈希密码（当前版本 v2：SHA-256 预哈希 + bcrypt）
 def hash_password(password: str) -> str:
     """Hash a password (current version: v2 — SHA-256 + bcrypt)."""
     raw = bcrypt.hashpw(_pre_hash_v2(password), bcrypt.gensalt()).decode("utf-8")
     return f"{_PREFIX_V2}{raw}"
 
 
+# 中文说明：验证密码，自动检测哈希版本并回退兼容
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password, auto-detecting the hash version.
 
@@ -58,11 +61,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
+# 中文说明：判断哈希是否使用旧版本需要重新哈希
 def needs_rehash(hashed_password: str) -> bool:
     """Return True if the hash uses an older version and should be rehashed."""
     return not hashed_password.startswith(_PREFIX_V2)
 
 
+# 中文说明：异步哈希密码，通过线程池避免阻塞事件循环
 async def hash_password_async(password: str) -> str:
     """Hash a password using bcrypt (non-blocking).
 
@@ -72,6 +77,7 @@ async def hash_password_async(password: str) -> str:
     return await asyncio.to_thread(hash_password, password)
 
 
+# 中文说明：异步验证密码，通过线程池避免阻塞事件循环
 async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash (non-blocking).
 

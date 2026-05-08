@@ -1,5 +1,7 @@
 """Middleware for logging token usage and annotating step attribution."""
 
+# Token 使用量中间件: 记录每次模型调用的 token 消耗, 标注步骤归因
+
 from __future__ import annotations
 
 import logging
@@ -253,6 +255,7 @@ def _build_attribution(message: AIMessage, todos: list[Todo]) -> dict[str, Any]:
     }
 
 
+# Token 使用量中间件: 记录每次模型调用的 token 消耗和步骤归因
 class TokenUsageMiddleware(AgentMiddleware):
     """Logs token usage from model responses and annotates the AI step."""
 

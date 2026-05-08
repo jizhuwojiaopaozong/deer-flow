@@ -1,3 +1,4 @@
+# 中文说明：IM 渠道抽象基类模块，定义所有渠道实现的公共接口
 """Abstract base class for IM channels."""
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from app.channels.message_bus import InboundMessage, InboundMessageType, Message
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：所有 IM 渠道实现的抽象基类，子类必须实现 start、stop 和 send 方法
 class Channel(ABC):
     """Base class for all IM channel implementations.
 
@@ -55,6 +57,7 @@ class Channel(ABC):
         to route the reply to the correct conversation/thread.
         """
 
+    # 中文说明：上传单个文件附件到平台，默认不支持，子类可覆盖
     async def send_file(self, msg: OutboundMessage, attachment: ResolvedAttachment) -> bool:
         """Upload a single file attachment to the platform.
 
@@ -65,6 +68,7 @@ class Channel(ABC):
 
     # -- helpers -----------------------------------------------------------
 
+    # 中文说明：便捷工厂方法，用于创建 InboundMessage 实例
     def _make_inbound(
         self,
         chat_id: str,
@@ -88,6 +92,7 @@ class Channel(ABC):
             metadata=metadata or {},
         )
 
+    # 中文说明：出站消息回调，仅转发目标为当前渠道的消息，先发送文本再上传附件
     async def _on_outbound(self, msg: OutboundMessage) -> None:
         """Outbound callback registered with the bus.
 
@@ -111,6 +116,7 @@ class Channel(ABC):
                 except Exception:
                     logger.exception("[%s] failed to upload file %s", self.name, attachment.filename)
 
+    # 中文说明：可选地处理入站文件附件，子类可覆盖以下载文件到沙盒目录
     async def receive_file(self, msg: InboundMessage, thread_id: str) -> InboundMessage:
         """
         Optionally process and materialize inbound file attachments for this channel.

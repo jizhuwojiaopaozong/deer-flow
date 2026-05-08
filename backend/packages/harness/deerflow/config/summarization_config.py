@@ -1,3 +1,4 @@
+# 中文说明：对话摘要配置，控制何时触发摘要以及保留多少上下文
 """Configuration for conversation summarization."""
 
 from typing import Literal
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 ContextSizeType = Literal["fraction", "tokens", "messages"]
 
 
+# 中文说明：上下文大小规格，支持按比例、token 数或消息数指定
 class ContextSize(BaseModel):
     """Context size specification for trigger or keep parameters."""
 
@@ -18,6 +20,7 @@ class ContextSize(BaseModel):
         return (self.type, self.value)
 
 
+# 中文说明：自动对话摘要配置，包括触发条件、保留策略和技能文件保护
 class SummarizationConfig(BaseModel):
     """Configuration for automatic conversation summarization."""
 

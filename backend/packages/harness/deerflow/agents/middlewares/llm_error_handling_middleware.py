@@ -1,5 +1,7 @@
 """LLM error handling middleware with retry/backoff and user-facing fallbacks."""
 
+# LLM 错误处理中间件: 重试/退避策略, 将异常标准化为可恢复的错误消息
+
 from __future__ import annotations
 
 import asyncio
@@ -63,6 +65,7 @@ _AUTH_PATTERNS = (
 )
 
 
+# LLM 错误处理中间件: 重试/退避/熔断器, 将异常标准化为可恢复的错误消息
 class LLMErrorHandlingMiddleware(AgentMiddleware[AgentState]):
     """Retry transient LLM errors and surface graceful assistant messages."""
 

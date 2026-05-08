@@ -6,6 +6,8 @@ This module provides a global memory mechanism that:
 - Injects relevant memory into system prompts for personalized responses
 """
 
+# 记忆系统模块: 提供用户上下文存储、LLM 事实提取、系统提示注入等功能
+
 from deerflow.agents.memory.prompt import (
     FACT_EXTRACTION_PROMPT,
     MEMORY_UPDATE_PROMPT,

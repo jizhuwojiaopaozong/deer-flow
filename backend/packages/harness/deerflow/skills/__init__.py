@@ -1,3 +1,4 @@
+# 中文说明：技能系统包初始化，导出技能相关的核心类和函数
 from __future__ import annotations
 
 from .installer import SkillAlreadyExistsError, SkillSecurityScanError

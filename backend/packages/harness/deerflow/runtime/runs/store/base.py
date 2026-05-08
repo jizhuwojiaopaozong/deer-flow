@@ -1,3 +1,4 @@
+# 中文说明：运行元数据存储抽象接口，定义运行的增删改查方法
 """Abstract interface for run metadata storage.
 
 RunManager depends on this interface. Implementations:
@@ -14,6 +15,7 @@ import abc
 from typing import Any
 
 
+# 中文说明：运行存储抽象基类，所有方法支持可选的 user_id 隔离
 class RunStore(abc.ABC):
     @abc.abstractmethod
     async def put(

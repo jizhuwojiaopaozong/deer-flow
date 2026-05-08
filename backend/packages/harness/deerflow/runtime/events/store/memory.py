@@ -1,3 +1,4 @@
+# 中文说明：内存运行事件存储，用于默认模式和测试
 """In-memory RunEventStore. Used when run_events.backend=memory (default) and in tests.
 
 Thread-safe for single-process async usage (no threading locks needed
@@ -11,6 +12,7 @@ from datetime import UTC, datetime
 from deerflow.runtime.events.store.base import RunEventStore
 
 
+# 中文说明：内存运行事件存储实现，使用字典按线程分组存储事件
 class MemoryRunEventStore(RunEventStore):
     def __init__(self) -> None:
         self._events: dict[str, list[dict]] = {}  # thread_id -> sorted event list

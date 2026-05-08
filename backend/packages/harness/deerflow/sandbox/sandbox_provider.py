@@ -1,3 +1,5 @@
+# 沙盒提供者: 管理沙盒生命周期 (acquire/get/release), 通过反射动态加载实现类
+
 from abc import ABC, abstractmethod
 
 from deerflow.config import get_app_config
@@ -5,6 +7,7 @@ from deerflow.reflection import resolve_class
 from deerflow.sandbox.sandbox import Sandbox
 
 
+# 沙盒提供者抽象基类: acquire 获取沙盒, get 查询沙盒, release 释放沙盒
 class SandboxProvider(ABC):
     """Abstract base class for sandbox providers"""
 
@@ -41,6 +44,7 @@ class SandboxProvider(ABC):
 _default_sandbox_provider: SandboxProvider | None = None
 
 
+# 获取沙盒提供者单例 (从配置动态加载)
 def get_sandbox_provider(**kwargs) -> SandboxProvider:
     """Get the sandbox provider singleton.
 

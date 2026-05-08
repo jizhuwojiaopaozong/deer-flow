@@ -1,7 +1,9 @@
+# 中文说明：运行事件存储子包，根据配置创建内存/数据库/JSONL 存储
 from deerflow.runtime.events.store.base import RunEventStore
 from deerflow.runtime.events.store.memory import MemoryRunEventStore
 
 
+# 中文说明：根据配置创建运行事件存储实例
 def make_run_event_store(config=None) -> RunEventStore:
     """Create a RunEventStore based on run_events.backend configuration."""
     if config is None or config.backend == "memory":

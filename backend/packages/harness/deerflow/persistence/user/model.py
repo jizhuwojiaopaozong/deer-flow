@@ -1,3 +1,4 @@
+# 中文说明：用户表 ORM 模型，存储用户账号、角色和 OAuth 关联信息
 """ORM model for the users table.
 
 Lives in the harness persistence package so it is picked up by
@@ -19,6 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from deerflow.persistence.base import Base
 
 
+# 中文说明：用户表，支持密码认证和 OAuth 第三方登录
 class UserRow(Base):
     __tablename__ = "users"
 

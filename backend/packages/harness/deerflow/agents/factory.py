@@ -10,6 +10,8 @@ components (e.g. ``task_tool`` for subagent) may still read global config at
 invocation time.  Full config-free runtime is a Phase 2 goal.
 """
 
+# 纯参数 Agent 工厂: SDK 级入口, 无 YAML、无全局单例, 通过 RuntimeFeatures 声明式组装中间件
+
 from __future__ import annotations
 
 import logging
@@ -58,6 +60,7 @@ _TODO_TOOL_DESCRIPTION = "Use this tool to create and manage a structured task l
 # ---------------------------------------------------------------------------
 
 
+# 从纯 Python 参数创建 DeerFlow Agent: 支持 middleware 全接管或 features 声明式组装
 def create_deerflow_agent(
     model: BaseChatModel,
     tools: list[BaseTool] | None = None,
@@ -152,6 +155,7 @@ def create_deerflow_agent(
 # ---------------------------------------------------------------------------
 
 
+# 根据 RuntimeFeatures 声明式组装中间件链和额外工具, 顺序与 make_lead_agent 一致
 def _assemble_from_features(
     feat: RuntimeFeatures,
     *,
@@ -303,6 +307,7 @@ def _assemble_from_features(
 # ---------------------------------------------------------------------------
 
 
+# 通过 @Next/@Prev 装饰器将额外中间件插入链中, 支持跨外部锚定
 def _insert_extra(chain: list[AgentMiddleware], extras: list[AgentMiddleware]) -> None:
     """Insert extra middlewares into *chain* using ``@Next``/``@Prev`` anchors.
 

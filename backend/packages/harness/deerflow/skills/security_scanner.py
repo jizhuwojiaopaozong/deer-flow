@@ -1,3 +1,4 @@
+# 中文说明：技能内容安全扫描器，使用 LLM 对技能内容进行安全审查
 """Security screening for agent-managed skill writes."""
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
+# 中文说明：安全扫描结果数据类，包含决策和原因
 class ScanResult:
     decision: str
     reason: str
@@ -37,6 +39,7 @@ def _extract_json_object(raw: str) -> dict | None:
         return None
 
 
+# 中文说明：对技能内容进行安全扫描，返回允许/警告/阻止的决策
 async def scan_skill_content(content: str, *, executable: bool = False, location: str = SKILL_MD_FILE, app_config: AppConfig | None = None) -> ScanResult:
     """Screen skill content before it is written to disk."""
     rubric = (

@@ -1,5 +1,7 @@
 """Middleware for intercepting clarification requests and presenting them to the user."""
 
+# 澄清中间件: 拦截 ask_clarification 工具调用, 通过 Command(goto=END) 中断执行, 必须在链的最后
+
 import json
 import logging
 from collections.abc import Callable
@@ -22,6 +24,7 @@ class ClarificationMiddlewareState(AgentState):
     pass
 
 
+# 澄清中间件: 拦截 ask_clarification 工具调用, 格式化问题并通过 Command(goto=END) 中断执行
 class ClarificationMiddleware(AgentMiddleware[ClarificationMiddlewareState]):
     """Intercepts clarification tool calls and interrupts execution to present questions to the user.
 

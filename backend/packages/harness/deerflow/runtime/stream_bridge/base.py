@@ -1,3 +1,4 @@
+# 中文说明：流桥接抽象协议，定义生产者-消费者事件传递接口
 """Abstract stream bridge protocol.
 
 StreamBridge decouples agent workers (producers) from SSE endpoints
@@ -14,6 +15,7 @@ from typing import Any
 
 
 @dataclass(frozen=True)
+# 中文说明：单个流事件数据类，包含 ID、事件名和数据载荷
 class StreamEvent:
     """Single stream event.
 
@@ -34,6 +36,7 @@ HEARTBEAT_SENTINEL = StreamEvent(id="", event="__heartbeat__", data=None)
 END_SENTINEL = StreamEvent(id="", event="__end__", data=None)
 
 
+# 中文说明：流桥接抽象基类，定义发布、订阅和清理接口
 class StreamBridge(abc.ABC):
     """Abstract base for stream bridges."""
 

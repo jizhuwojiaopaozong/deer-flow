@@ -12,6 +12,8 @@ Detection strategy:
      response so the agent is forced to produce a final text answer.
 """
 
+# 循环检测中间件: 检测重复工具调用循环, 超过阈值时注入警告或强制停止
+
 from __future__ import annotations
 
 import hashlib
@@ -141,6 +143,7 @@ _HARD_STOP_MSG = "[FORCED STOP] Repeated tool calls exceeded the safety limit. P
 _TOOL_FREQ_HARD_STOP_MSG = "[FORCED STOP] Tool {tool_name} called {count} times — exceeded the per-tool safety limit. Producing final answer with results collected so far."
 
 
+# 循环检测中间件: 滑动窗口跟踪工具调用哈希, 超阈值注入警告或强制停止
 class LoopDetectionMiddleware(AgentMiddleware[AgentState]):
     """Detects and breaks repetitive tool call loops.
 

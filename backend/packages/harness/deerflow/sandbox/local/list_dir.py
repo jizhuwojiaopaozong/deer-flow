@@ -1,8 +1,10 @@
+# 目录遍历工具: 递归列出目录结构, 支持深度限制和忽略规则
 from pathlib import Path
 
 from deerflow.sandbox.search import should_ignore_name
 
 
+# 列出目录内容: 递归遍历指定深度, 过滤忽略项和符号链接越界
 def list_dir(path: str, max_depth: int = 2) -> list[str]:
     """
     List files and directories up to max_depth levels deep.
@@ -22,6 +24,7 @@ def list_dir(path: str, max_depth: int = 2) -> list[str]:
     if not root_path.is_dir():
         return result
 
+    # 检查路径是否在根目录内: 防止符号链接逃逸
     def _is_within_root(candidate: Path) -> bool:
         try:
             candidate.relative_to(root_path)
@@ -29,6 +32,7 @@ def list_dir(path: str, max_depth: int = 2) -> list[str]:
         except ValueError:
             return False
 
+    # 递归遍历目录: 逐层深入到最大深度, 处理符号链接和权限错误
     def _traverse(current_path: Path, current_depth: int) -> None:
         """Recursively traverse directories up to max_depth."""
         if current_depth > max_depth:

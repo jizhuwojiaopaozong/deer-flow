@@ -1,3 +1,5 @@
+# 中文说明：MiniMax推理输出适配器，保留reasoning_split字段并将推理内容映射到标准格式
+
 """Patched ChatOpenAI adapter for MiniMax reasoning output.
 
 MiniMax's OpenAI-compatible chat completions API can return structured
@@ -28,6 +30,7 @@ from langchain_openai.chat_models.base import (
 _THINK_TAG_RE = re.compile(r"<think>\s*(.*?)\s*</think>", re.DOTALL)
 
 
+# 中文说明：从reasoning_details列表中提取推理文本
 def _extract_reasoning_text(
     reasoning_details: Any,
     *,
@@ -49,6 +52,7 @@ def _extract_reasoning_text(
     return "\n\n".join(parts) if parts else None
 
 
+# 中文说明：从内容中剥离<think>标签并提取推理文本
 def _strip_inline_think_tags(content: str) -> tuple[str, str | None]:
     reasoning_parts: list[str] = []
 
@@ -95,6 +99,7 @@ def _with_reasoning_content(
     return message.model_copy(update={"additional_kwargs": additional_kwargs})
 
 
+# 中文说明：ChatOpenAI适配器，保留MiniMax推理输出的reasoning_details字段
 class PatchedChatMiniMax(ChatOpenAI):
     """ChatOpenAI adapter that preserves MiniMax reasoning output."""
 

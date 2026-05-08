@@ -1,3 +1,4 @@
+# 中文说明：文件上传模块，提供上传管理、文件列表和安全删除等功能
 from .manager import (
     PathTraversalError,
     claim_unique_filename,

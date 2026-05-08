@@ -1,3 +1,4 @@
+# 中文说明：Discord 渠道实现，使用 discord.py 库连接
 """Discord channel integration using discord.py."""
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 _DISCORD_MAX_MESSAGE_LEN = 2000
 
 
+# 中文说明：Discord 机器人类，处理消息接收、线程创建和文件上传
 class DiscordChannel(Channel):
     """Discord bot channel.
 
@@ -39,6 +41,7 @@ class DiscordChannel(Channel):
         self._main_loop: asyncio.AbstractEventLoop | None = None
         self._discord_module = None
 
+    # 中文说明：启动 Discord 渠道，创建客户端并在独立线程中运行
     async def start(self) -> None:
         if self._running:
             return
@@ -99,6 +102,7 @@ class DiscordChannel(Channel):
         self._discord_module = None
         logger.info("Discord channel stopped")
 
+    # 中文说明：发送消息到 Discord，自动分片处理超长文本
     async def send(self, msg: OutboundMessage) -> None:
         target = await self._resolve_target(msg)
         if target is None:
@@ -130,6 +134,7 @@ class DiscordChannel(Channel):
             logger.exception("[Discord] failed to upload file: %s", attachment.filename)
             return False
 
+    # 中文说明：处理 Discord 消息事件，自动创建线程并发布入站消息
     async def _on_message(self, message) -> None:
         if not self._running or not self._client:
             return
@@ -253,6 +258,7 @@ class DiscordChannel(Channel):
         except Exception:
             return None
 
+    # 中文说明：将超长文本按 Discord 消息长度限制分片
     @staticmethod
     def _split_text(text: str) -> list[str]:
         if not text:

@@ -1,5 +1,7 @@
 """Memory update queue with debounce mechanism."""
 
+# 记忆更新队列: 带防抖机制, 多线程对话在防抖窗口内批量处理
+
 import logging
 import threading
 import time
@@ -12,6 +14,7 @@ from deerflow.config.memory_config import get_memory_config
 logger = logging.getLogger(__name__)
 
 
+# 对话上下文: 包含线程 ID、消息、用户 ID、纠正/强化信号检测结果
 @dataclass
 class ConversationContext:
     """Context for a conversation to be processed for memory update."""
@@ -25,6 +28,7 @@ class ConversationContext:
     reinforcement_detected: bool = False
 
 
+# 记忆更新队列: 收集对话上下文, 防抖后批量处理, 按线程去重
 class MemoryUpdateQueue:
     """Queue for memory updates with debounce mechanism.
 
@@ -40,6 +44,7 @@ class MemoryUpdateQueue:
         self._timer: threading.Timer | None = None
         self._processing = False
 
+    # 添加对话到更新队列: 捕获 user_id 以穿越 threading.Timer 边界
     def add(
         self,
         thread_id: str,
@@ -78,6 +83,7 @@ class MemoryUpdateQueue:
 
         logger.info("Memory update queued for thread %s, queue size: %d", thread_id, len(self._queue))
 
+    # 添加对话并立即在后台开始处理
     def add_nowait(
         self,
         thread_id: str,
@@ -105,6 +111,7 @@ class MemoryUpdateQueue:
 
         logger.info("Memory update queued for immediate processing on thread %s, queue size: %d", thread_id, len(self._queue))
 
+    # 内部入队: 按线程去重, 合并纠正/强化信号
     def _enqueue_locked(
         self,
         *,
@@ -153,6 +160,7 @@ class MemoryUpdateQueue:
         self._timer.daemon = True
         self._timer.start()
 
+    # 处理队列中所有待处理的对话上下文
     def _process_queue(self) -> None:
         """Process all queued conversation contexts."""
         # Import here to avoid circular dependency
@@ -203,6 +211,7 @@ class MemoryUpdateQueue:
             with self._lock:
                 self._processing = False
 
+    # 强制立即处理队列 (用于测试或优雅关闭)
     def flush(self) -> None:
         """Force immediate processing of the queue.
 
@@ -252,6 +261,7 @@ _memory_queue: MemoryUpdateQueue | None = None
 _queue_lock = threading.Lock()
 
 
+# 获取全局记忆更新队列单例
 def get_memory_queue() -> MemoryUpdateQueue:
     """Get the global memory update queue singleton.
 
@@ -265,6 +275,7 @@ def get_memory_queue() -> MemoryUpdateQueue:
         return _memory_queue
 
 
+# 重置全局记忆队列 (用于测试)
 def reset_memory_queue() -> None:
     """Reset the global memory queue.
 

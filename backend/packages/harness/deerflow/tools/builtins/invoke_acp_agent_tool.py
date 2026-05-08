@@ -1,3 +1,4 @@
+# ACP 代理调用工具: 与外部 ACP 兼容代理通信, 支持流式响应和权限管理
 """Built-in tool for invoking external ACP-compatible agents."""
 
 import logging
@@ -12,11 +13,13 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
+# ACP 代理调用输入参数: 指定代理名称和任务提示
 class _InvokeACPAgentInput(BaseModel):
     agent: str = Field(description="Name of the ACP agent to invoke")
     prompt: str = Field(description="The concise task prompt to send to the agent")
 
 
+# 获取 ACP 工作目录: 每个线程独立的工作空间, 防止并发冲突
 def _get_work_dir(thread_id: str | None) -> str:
     """Get the per-thread ACP workspace directory.
 
@@ -50,6 +53,7 @@ def _get_work_dir(thread_id: str | None) -> str:
     return str(work_dir)
 
 
+# 构建 MCP 服务器配置: 从 DeerFlow 的 MCP 配置转换为 ACP 格式
 def _build_mcp_servers() -> dict[str, dict[str, Any]]:
     """Build ACP ``mcpServers`` config from DeerFlow's enabled MCP servers."""
     from deerflow.config.extensions_config import ExtensionsConfig
@@ -58,6 +62,7 @@ def _build_mcp_servers() -> dict[str, dict[str, Any]]:
     return build_servers_config(ExtensionsConfig.from_file())
 
 
+# 构建 ACP MCP 服务器列表: 将启用的 MCP 服务器转换为 ACP 会话格式
 def _build_acp_mcp_servers() -> list[dict[str, Any]]:
     """Build ACP ``mcpServers`` payload for ``new_session``.
 
@@ -94,6 +99,7 @@ def _build_acp_mcp_servers() -> list[dict[str, Any]]:
     return mcp_servers
 
 
+# 构建权限响应: 自动批准或拒绝 ACP 代理的权限请求
 def _build_permission_response(options: list[Any], *, auto_approve: bool) -> Any:
     """Build an ACP permission response.
 
@@ -124,6 +130,7 @@ def _build_permission_response(options: list[Any], *, auto_approve: bool) -> Any
     return RequestPermissionResponse(outcome=DeniedOutcome(outcome="cancelled"))
 
 
+# 格式化调用错误: 提供可操作的修复建议
 def _format_invocation_error(agent: str, cmd: str, exc: Exception) -> str:
     """Return a user-facing ACP invocation error with actionable remediation."""
     if not isinstance(exc, FileNotFoundError):
@@ -136,6 +143,7 @@ def _format_invocation_error(agent: str, cmd: str, exc: Exception) -> str:
     return f"{message} Install the agent binary or update `acp_agents.{agent}.command` in config.yaml."
 
 
+# 构建 ACP 代理调用工具: 根据配置的代理列表生成工具描述和执行函数
 def build_invoke_acp_agent_tool(agents: dict) -> BaseTool:
     """Create the ``invoke_acp_agent`` tool with a description generated from configured agents.
 
@@ -178,6 +186,7 @@ def build_invoke_acp_agent_tool(agents: dict) -> BaseTool:
         except ImportError:
             return "Error: agent-client-protocol package is not installed. Run `uv sync` to install project dependencies."
 
+        # 收集式 ACP 客户端: 接收流式文本更新并处理权限请求
         class _CollectingClient(Client):
             """Minimal ACP Client that collects streamed text from session updates."""
 

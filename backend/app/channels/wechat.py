@@ -1,3 +1,4 @@
+# 中文说明：微信渠道实现，通过 iLink 长轮询连接，支持 QR 码登录和 AES 加密媒体传输
 """WeChat channel — connects to iLink via long-polling."""
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from app.channels.message_bus import InboundMessageType, MessageBus, OutboundMes
 logger = logging.getLogger(__name__)
 
 
+# 中文说明：消息条目类型枚举（文本、图片、语音、文件、视频）
 class MessageItemType(IntEnum):
     NONE = 0
     TEXT = 1
@@ -36,6 +38,7 @@ class MessageItemType(IntEnum):
     VIDEO = 5
 
 
+# 中文说明：上传媒体类型枚举
 class UploadMediaType(IntEnum):
     IMAGE = 1
     VIDEO = 2
@@ -126,6 +129,7 @@ def _detect_image_extension_and_mime(content: bytes) -> tuple[str, str] | None:
     return None
 
 
+# 中文说明：微信 iLink 机器人类，使用长轮询接收消息，支持 QR 码绑定和加密媒体传输
 class WechatChannel(Channel):
     """WeChat iLink bot channel using long-polling.
 
@@ -254,6 +258,7 @@ class WechatChannel(Channel):
         self._auth_path = self._state_dir / "wechat-auth.json" if self._state_dir else None
         self._load_state()
 
+    # 中文说明：启动微信渠道，初始化 HTTP 客户端并开始轮询
     async def start(self) -> None:
         if self._running:
             return
@@ -290,6 +295,7 @@ class WechatChannel(Channel):
 
         logger.info("WeChat channel stopped")
 
+    # 中文说明：发送文本消息到微信，支持重试机制
     async def send(self, msg: OutboundMessage, *, _max_retries: int = 3) -> None:
         text = msg.text.strip()
         if not text:
@@ -361,6 +367,7 @@ class WechatChannel(Channel):
         logger.error("[WeChat] send failed after %d attempts: %s", max_retries, last_exc)
         raise last_exc  # type: ignore[misc]
 
+    # 中文说明：发送文件/图片附件到微信，通过 CDN 加密上传
     async def send_file(self, msg: OutboundMessage, attachment: ResolvedAttachment) -> bool:
         if attachment.is_image:
             return await self._send_image_attachment(msg, attachment)
@@ -542,6 +549,7 @@ class WechatChannel(Channel):
             logger.exception("[WeChat] failed to send file attachment %s", attachment.filename)
             return False
 
+    # 中文说明：长轮询主循环，持续从 iLink 拉取新消息
     async def _poll_loop(self) -> None:
         while self._running:
             try:
@@ -593,6 +601,7 @@ class WechatChannel(Channel):
                 logger.exception("[WeChat] polling loop failed")
                 await asyncio.sleep(self._retry_delay)
 
+    # 中文说明：处理单条原始消息更新，提取文本和文件并发布入站消息
     async def _handle_update(self, raw_message: Any) -> None:
         if not isinstance(raw_message, dict):
             return
@@ -633,6 +642,7 @@ class WechatChannel(Channel):
         inbound.topic_id = None
         await self.bus.publish_inbound(inbound)
 
+    # 中文说明：确保已认证，支持 bot_token 和 QR 码登录两种方式
     async def _ensure_authenticated(self) -> bool:
         async with self._auth_lock:
             if self._bot_token:
@@ -652,6 +662,7 @@ class WechatChannel(Channel):
                 return False
             return bool(auth_state.get("bot_token"))
 
+    # 中文说明：通过 QR 码完成 iLink 机器人绑定
     async def _bind_via_qrcode(self) -> dict[str, Any]:
         qrcode_data = await self._request_public_get_json(
             "/ilink/bot/get_bot_qrcode",

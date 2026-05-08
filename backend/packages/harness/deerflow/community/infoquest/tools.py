@@ -1,3 +1,4 @@
+# 中文说明：基于 InfoQuest API 的网页搜索、抓取和图片搜索工具实现
 from langchain.tools import tool
 
 from deerflow.config import get_app_config
@@ -8,6 +9,7 @@ from .infoquest_client import InfoQuestClient
 readability_extractor = ReadabilityExtractor()
 
 
+# 中文说明：根据配置创建 InfoQuest 客户端实例
 def _get_infoquest_client() -> InfoQuestClient:
     search_config = get_app_config().get_tool_config("web_search")
     search_time_range = -1
@@ -43,6 +45,7 @@ def _get_infoquest_client() -> InfoQuestClient:
     )
 
 
+# 中文说明：使用 InfoQuest 执行网页搜索
 @tool("web_search", parse_docstring=True)
 def web_search_tool(query: str) -> str:
     """Search the web.
@@ -55,6 +58,7 @@ def web_search_tool(query: str) -> str:
     return client.web_search(query)
 
 
+# 中文说明：使用 InfoQuest 抓取网页内容并转换为 Markdown
 @tool("web_fetch", parse_docstring=True)
 def web_fetch_tool(url: str) -> str:
     """Fetch the contents of a web page at a given URL.
@@ -74,6 +78,7 @@ def web_fetch_tool(url: str) -> str:
     return article.to_markdown()[:4096]
 
 
+# 中文说明：使用 InfoQuest 搜索在线图片
 @tool("image_search", parse_docstring=True)
 def image_search_tool(query: str) -> str:
     """Search for images online. Use this tool BEFORE image generation to find reference images for characters, portraits, objects, scenes, or any content requiring visual accuracy.

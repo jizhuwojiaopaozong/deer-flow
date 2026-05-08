@@ -1,3 +1,4 @@
+# 中文说明：异步检查点工厂，为长时间运行的服务器提供资源清理
 """Async checkpointer factory.
 
 Provides an **async context manager** for long-running async servers that need
@@ -123,6 +124,7 @@ async def _async_checkpointer_from_database(db_config) -> AsyncIterator[Checkpoi
 
 
 @contextlib.asynccontextmanager
+# 中文说明：异步上下文管理器，创建检查点实例并在退出时清理资源
 async def make_checkpointer(app_config: AppConfig | None = None) -> AsyncIterator[Checkpointer]:
     """Async context manager that yields a checkpointer for the caller's lifetime.
     Resources are opened on enter and closed on exit -- no global state::

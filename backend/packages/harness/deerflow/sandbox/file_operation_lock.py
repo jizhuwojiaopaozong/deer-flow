@@ -1,3 +1,5 @@
+# 文件操作锁: 按 (sandbox_id, path) 唯一键串行化同路径的文件操作, 防止并发写入冲突
+
 import threading
 import weakref
 

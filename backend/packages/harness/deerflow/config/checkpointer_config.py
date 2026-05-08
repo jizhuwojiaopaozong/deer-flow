@@ -1,3 +1,4 @@
+# 中文说明：LangGraph 检查点配置，控制状态持久化的后端类型
 """Configuration for LangGraph checkpointer."""
 
 from typing import Literal
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 CheckpointerType = Literal["memory", "sqlite", "postgres"]
 
 
+# 中文说明：检查点配置类，支持 memory/sqlite/postgres 三种持久化方式
 class CheckpointerConfig(BaseModel):
     """Configuration for LangGraph state persistence checkpointer."""
 

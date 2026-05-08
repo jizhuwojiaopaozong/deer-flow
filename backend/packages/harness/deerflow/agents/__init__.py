@@ -1,3 +1,5 @@
+# Agent 系统入口: 导出代理工厂、特性标志、状态模式, 启动时预热技能缓存
+
 from .factory import create_deerflow_agent
 from .features import Next, Prev, RuntimeFeatures
 from .lead_agent import make_lead_agent
