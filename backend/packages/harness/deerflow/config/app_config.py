@@ -199,17 +199,28 @@ class AppConfig(BaseModel):
 
         previous_checkpointer_config = get_checkpointer_config()
 
+        # 对话标题生成配置
         load_title_config_from_dict(config.title.model_dump())
+        # 对话总结摘要配置（比例/token/消息数 触发）
         load_summarization_config_from_dict(config.summarization.model_dump())
+        # 全局记忆存储配置
         load_memory_config_from_dict(config.memory.model_dump())
+        # 自定义agent是否允许gateway对其配置、soul.md等文件的读写，false表示不允许。
         load_agents_api_config_from_dict(config.agents_api.model_dump())
+        # 系统内置子agent和自定义agent的配置
         load_subagents_config_from_dict(config.subagents.model_dump())
+        # mcp工具加载配置（启动直接加载/运行时动态加载）
         load_tool_search_config_from_dict(config.tool_search.model_dump())
+        # 是否在每次工具调用前都启用授权校验（校验通过则执行，不通过则不执行）
         load_guardrails_config_from_dict(config.guardrails.model_dump())
+        # 已废弃
         load_checkpointer_config_from_dict(config.checkpointer.model_dump() if config.checkpointer is not None else None)
+        # 暂时没用
         load_stream_bridge_config_from_dict(config.stream_bridge.model_dump() if config.stream_bridge is not None else None)
+        # ACP代理配置
         load_acp_config_from_dict({name: agent.model_dump() for name, agent in acp_agents.items()})
 
+        # 当配置发生变化时，将当前的配置清空并重新创建
         if previous_checkpointer_config != config.checkpointer:
             # These runtime singletons derive their backend from checkpointer config.
             # Keep imports local to avoid cycles: both providers import get_app_config.

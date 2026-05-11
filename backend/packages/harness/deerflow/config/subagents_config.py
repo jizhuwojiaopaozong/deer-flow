@@ -37,6 +37,7 @@ class SubagentOverrideConfig(BaseModel):
 class CustomSubagentConfig(BaseModel):
     """User-defined subagent type declared in config.yaml."""
 
+    # 自定义子agent的描述，用于lead agent何时触发当前子agent
     description: str = Field(
         description="When the lead agent should delegate to this subagent",
     )
