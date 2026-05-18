@@ -198,6 +198,8 @@ async def upload_files(
     total_size = 0
 
     sandbox_provider = get_sandbox_provider()
+    # 使用线程数据挂载的沙盒 (本地/docker): 不需要额外同步 ；_uses_thread_data_mounts(sandbox_provider) ：true
+    # 不使用挂载的沙盒 (远程k3s时使用）: 需要手动同步文件到沙盒 ；_uses_thread_data_mounts(sandbox_provider) ：false
     sync_to_sandbox = not _uses_thread_data_mounts(sandbox_provider)
     sandbox = None
     if sync_to_sandbox:
@@ -273,6 +275,7 @@ async def upload_files(
             raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}: {str(e)}")
 
     if sync_to_sandbox:
+        # docker/local为false不执行
         for file_path, virtual_path in sandbox_sync_targets:
             _make_file_sandbox_writable(file_path)
             sandbox.update_file(virtual_path, file_path.read_bytes())

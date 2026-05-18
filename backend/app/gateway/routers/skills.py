@@ -114,6 +114,7 @@ async def list_skills(config: AppConfig = Depends(get_config)) -> SkillsListResp
 # 中文说明：从 .skill 文件（ZIP 归档）安装技能
 async def install_skill(request: SkillInstallRequest, config: AppConfig = Depends(get_config)) -> SkillInstallResponse:
     try:
+        # 中文说明：将虚拟路径（如 /mnt/user-data/outputs/my-skill.skill）解析为线程目录下的实际文件系统路径
         skill_file_path = resolve_thread_virtual_path(request.thread_id, request.path)
         result = await get_or_new_skill_storage(app_config=config).ainstall_skill_from_archive(skill_file_path)
         await refresh_skills_system_prompt_cache_async()

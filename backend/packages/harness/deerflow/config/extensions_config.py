@@ -66,6 +66,7 @@ class ExtensionsConfig(BaseModel):
         description="Map of MCP server name to configuration",
         alias="mcpServers",
     )
+    # 用于配制每个skill是否是开启或关闭状态
     skills: dict[str, SkillStateConfig] = Field(
         default_factory=dict,
         description="Map of skill name to state configuration",

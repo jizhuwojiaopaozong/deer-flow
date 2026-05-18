@@ -68,6 +68,7 @@ def create_chat_model(name: str | None = None, thinking_enabled: bool = False, *
     model_config = config.get_model_config(name)
     if model_config is None:
         raise ValueError(f"Model {name} not found in config") from None
+    # 检查模型类是否是BaseChatModel的子类，以及当前模型类是否真的是类。
     model_class = resolve_class(model_config.use, BaseChatModel)
     model_settings_from_config = model_config.model_dump(
         exclude_none=True,
@@ -86,6 +87,25 @@ def create_chat_model(name: str | None = None, thinking_enabled: bool = False, *
     )
     # Compute effective when_thinking_enabled by merging in the `thinking` shortcut field.
     # The `thinking` shortcut is equivalent to setting when_thinking_enabled["thinking"].
+    # Example: DeepSeek model (with thinking support)
+    # - name: deepseek-v3
+    #   display_name: DeepSeek V3 (Thinking)
+    #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+    #   model: deepseek-reasoner
+    #   api_key: $DEEPSEEK_API_KEY
+    #   timeout: 600.0
+    #   max_retries: 2
+    #   max_tokens: 8192
+    #   supports_thinking: true
+    #   supports_vision: false  # DeepSeek V3 does not support vision
+    #   when_thinking_enabled:
+    #     extra_body:
+    #       thinking:
+    #         type: enabled
+    #   when_thinking_disabled:
+    #     extra_body:
+    #       thinking:
+    #         type: disabled
     has_thinking_settings = (model_config.when_thinking_enabled is not None) or (model_config.thinking is not None)
     effective_wte: dict = dict(model_config.when_thinking_enabled) if model_config.when_thinking_enabled else {}
     if model_config.thinking is not None:
