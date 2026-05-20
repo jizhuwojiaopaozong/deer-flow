@@ -16,11 +16,15 @@ three-state semantics (see :mod:`deerflow.runtime.user_context`):
 from __future__ import annotations
 
 import abc
+from typing import Any
 
 from deerflow.runtime.user_context import AUTO, _AutoSentinel
 
 
-# 中文说明：线程元数据存储抽象基类，支持三态 user_id 语义
+class InvalidMetadataFilterError(ValueError):
+    """Raised when all client-supplied metadata filter keys are rejected."""
+
+
 class ThreadMetaStore(abc.ABC):
     @abc.abstractmethod
     async def create(
@@ -42,12 +46,12 @@ class ThreadMetaStore(abc.ABC):
     async def search(
         self,
         *,
-        metadata: dict | None = None,
+        metadata: dict[str, Any] | None = None,
         status: str | None = None,
         limit: int = 100,
         offset: int = 0,
         user_id: str | None | _AutoSentinel = AUTO,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         pass
 
     @abc.abstractmethod
