@@ -119,6 +119,7 @@ async def list_agents() -> AgentsListResponse:
     Returns:
         List of all custom agents with their metadata and soul content.
     """
+    # 自定义agent的api只有开启才可执行后续的操作。
     _require_agents_api_enabled()
 
     user_id = get_effective_user_id()
