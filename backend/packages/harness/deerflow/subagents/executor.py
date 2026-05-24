@@ -60,7 +60,6 @@ class SubagentStatus(Enum):
         }
 
 
-# 中文说明：子代理执行结果数据类，包含任务ID、状态、结果、错误信息和时间戳
 @dataclass
 class SubagentResult:
     """Result of a subagent execution.

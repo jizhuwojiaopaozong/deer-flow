@@ -216,7 +216,6 @@ class DiscordChannel(Channel):
             logger.exception("[Discord] failed to upload file: %s", attachment.filename)
             return False
 
-    # 中文说明：处理 Discord 消息事件，自动创建线程并发布入站消息
     async def _start_typing(self, channel, chat_id: str, thread_ts: str | None = None) -> None:
         """Starts a loop to send periodic typing indicators."""
         target_id = thread_ts or chat_id

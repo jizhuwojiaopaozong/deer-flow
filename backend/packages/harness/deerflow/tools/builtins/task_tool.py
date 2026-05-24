@@ -7,7 +7,8 @@ import uuid
 from dataclasses import replace
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
-from langchain.tools import InjectedToolCallId, ToolRuntime, tool
+from langchain.tools import InjectedToolCallId, tool
+from langchain_core.callbacks import BaseCallbackManager
 from langgraph.config import get_stream_writer
 from langgraph.typing import ContextT
 
@@ -101,14 +102,30 @@ def _schedule_deferred_subagent_cleanup(task_id: str, trace_id: str, max_polls: 
 
 
 def _find_usage_recorder(runtime: Any) -> Any | None:
-    """Find a callback handler with ``record_external_llm_usage_records`` in the runtime config."""
+    """Find a callback handler with ``record_external_llm_usage_records`` in the runtime config.
+
+    LangChain may pass ``config["callbacks"]`` in three different shapes:
+
+    - ``None`` (no callbacks registered): no recorder.
+    - A plain ``list[BaseCallbackHandler]``: iterate it directly.
+    - A ``BaseCallbackManager`` instance (e.g. ``AsyncCallbackManager`` on async
+      tool runs): managers are not iterable, so we unwrap ``.handlers`` first.
+
+    Any other shape (e.g. a single handler object accidentally passed without a
+    list wrapper) cannot be iterated safely; treat it as "no recorder" rather
+    than raise.
+    """
     if runtime is None:
         return None
     config = getattr(runtime, "config", None)
     if not isinstance(config, dict):
         return None
-    callbacks = config.get("callbacks", [])
+    callbacks = config.get("callbacks")
+    if isinstance(callbacks, BaseCallbackManager):
+        callbacks = callbacks.handlers
     if not callbacks:
+        return None
+    if not isinstance(callbacks, list):
         return None
     for cb in callbacks:
         if hasattr(cb, "record_external_llm_usage_records"):
@@ -148,7 +165,6 @@ def _report_subagent_usage(runtime: Any, result: Any) -> None:
         logger.warning("Failed to report subagent token usage", exc_info=True)
 
 
-# 从运行时上下文获取应用配置: 用于子代理的配置继承
 def _get_runtime_app_config(runtime: Any) -> "AppConfig | None":
     context = getattr(runtime, "context", None)
     if isinstance(context, dict):
@@ -393,9 +409,6 @@ async def task_tool(
             # Polling timeout as a safety net (in case thread pool timeout doesn't work)
             # Set to execution timeout + 60s buffer, in 5s poll intervals
             # This catches edge cases where the background task gets stuck
-            # Note: We don't call cleanup_background_task here because the task may
-            # still be running in the background. The cleanup will happen when the
-            # executor completes and sets a terminal status.
             if poll_count > max_poll_count:
                 timeout_minutes = config.timeout_seconds // 60
                 logger.error(f"[trace={trace_id}] Task {task_id} polling timed out after {poll_count} polls (should have been caught by thread pool timeout)")
@@ -403,6 +416,11 @@ async def task_tool(
                 usage = _summarize_usage(getattr(result, "token_usage_records", None))
                 _cache_subagent_usage(tool_call_id, usage, enabled=cache_token_usage)
                 writer({"type": "task_timed_out", "task_id": task_id, "usage": usage})
+                # The task may still be running in the background. Signal cooperative
+                # cancellation and schedule deferred cleanup to remove the entry from
+                # _background_tasks once the background thread reaches a terminal state.
+                request_cancel_background_task(task_id)
+                _schedule_deferred_subagent_cleanup(task_id, trace_id, max_poll_count)
                 return f"Task polling timed out after {timeout_minutes} minutes. This may indicate the background task is stuck. Status: {result.status.value}"
     except asyncio.CancelledError:
         # Signal the background subagent thread to stop cooperatively.

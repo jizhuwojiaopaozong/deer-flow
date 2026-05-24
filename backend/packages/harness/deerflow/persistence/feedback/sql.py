@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from deerflow.persistence.feedback.model import FeedbackRow
 from deerflow.runtime.user_context import AUTO, _AutoSentinel, resolve_user_id
+from deerflow.utils.time import coerce_iso
 
 
 # 中文说明：反馈仓库，提供反馈的增删改查和聚合统计
@@ -26,7 +27,8 @@ class FeedbackRepository:
         d = row.to_dict()
         val = d.get("created_at")
         if isinstance(val, datetime):
-            d["created_at"] = val.isoformat()
+            # SQLite drops tzinfo on read; normalize via ``coerce_iso`` so output is always tz-aware.
+            d["created_at"] = coerce_iso(val)
         return d
 
     async def create(

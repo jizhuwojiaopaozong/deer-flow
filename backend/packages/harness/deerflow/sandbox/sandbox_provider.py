@@ -1,5 +1,4 @@
-# 沙盒提供者: 管理沙盒生命周期 (acquire/get/release), 通过反射动态加载实现类
-
+import asyncio
 from abc import ABC, abstractmethod
 
 from deerflow.config import get_app_config
@@ -21,6 +20,16 @@ class SandboxProvider(ABC):
             The ID of the acquired sandbox environment.
         """
         pass
+
+    async def acquire_async(self, thread_id: str | None = None) -> str:
+        """Acquire a sandbox without blocking the event loop.
+
+        Most sandbox providers expose a synchronous lifecycle API because local
+        Docker/provisioner operations are blocking. Async runtimes should call
+        this method so those blocking operations run in a worker thread instead
+        of stalling the event loop.
+        """
+        return await asyncio.to_thread(self.acquire, thread_id)
 
     @abstractmethod
     def get(self, sandbox_id: str) -> Sandbox | None:

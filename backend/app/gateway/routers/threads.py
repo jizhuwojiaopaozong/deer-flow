@@ -118,7 +118,6 @@ class ThreadSearchRequest(BaseModel):
         return v
 
 
-# 中文说明：线程状态响应模型
 class ThreadStateResponse(BaseModel):
     """Response model for thread state."""
 
