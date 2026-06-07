@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from deerflow.config.runtime_paths import resolve_path
+from deerflow.skills.permissions import make_skill_written_path_sandbox_readable
 from deerflow.skills.storage.skill_storage import SKILL_MD_FILE, SkillStorage
 from deerflow.skills.types import SkillCategory
 
@@ -92,6 +93,7 @@ class LocalSkillStorage(SkillStorage):
             tmp_file.write(content)
             tmp_path = Path(tmp_file.name)
         tmp_path.replace(target)
+        make_skill_written_path_sandbox_readable(self.get_custom_skill_dir(name), target)
 
     # 中文说明：从 .skill ZIP 档案异步安装技能到 custom 目录
     async def ainstall_skill_from_archive(self, archive_path: str | Path) -> dict:
