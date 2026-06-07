@@ -201,11 +201,23 @@ def _require(attr: str, label: str) -> Callable[[Request], T]:
     return dep
 
 
+# 从 app.state 取stream_bridge，SSE 事件发布/订阅桥
 get_stream_bridge: Callable[[Request], StreamBridge] = _require("stream_bridge", "Stream bridge")
+# 从 app.state 取run_manager，运行生命周期管理（创建/取消/查询）
 get_run_manager: Callable[[Request], RunManager] = _require("run_manager", "Run manager")
+# 等价于手动写了一个这样的函数：
+# def get_run_manager(request: Request) -> RunManager:
+#     val = getattr(request.app.state, "run_manager", None)
+#     if val is None:
+#         raise HTTPException(503, detail="Run manager not available")
+#     return val
+# 从 app.state 取checkpointer，LangGraph 检查点（状态持久化）
 get_checkpointer: Callable[[Request], Checkpointer] = _require("checkpointer", "Checkpointer")
+# 从 app.state 取run_event_store，运行事件存储（消息/审计）
 get_run_event_store: Callable[[Request], RunEventStore] = _require("run_event_store", "Run event store")
+# 从 app.state 取feedback_repo，用户反馈仓库
 get_feedback_repo: Callable[[Request], FeedbackRepository] = _require("feedback_repo", "Feedback")
+# 从 app.state 取run_store，运行记录持久化存储
 get_run_store: Callable[[Request], RunStore] = _require("run_store", "Run store")
 
 
