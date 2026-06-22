@@ -11,8 +11,7 @@ _api_key_warned = False
 
 # 中文说明：Jina Reader HTTP 客户端，支持异步网页抓取
 class JinaClient:
-    # 中文说明：异步抓取指定 URL 的网页内容
-    async def crawl(self, url: str, return_format: str = "html", timeout: int = 10) -> str:
+    async def crawl(self, url: str, return_format: str = "html", timeout: int = 10, proxy: str | None = None, trust_env: bool = True) -> str:
         global _api_key_warned
         headers = {
             "Content-Type": "application/json",
@@ -26,7 +25,10 @@ class JinaClient:
             logger.warning("Jina API key is not set. Provide your own key to access a higher rate limit. See https://jina.ai/reader for more information.")
         data = {"url": url}
         try:
-            async with httpx.AsyncClient() as client:
+            client_kwargs: dict[str, object] = {"trust_env": trust_env}
+            if proxy:
+                client_kwargs["proxy"] = proxy
+            async with httpx.AsyncClient(**client_kwargs) as client:
                 response = await client.post("https://r.jina.ai/", headers=headers, json=data, timeout=timeout)
 
             if response.status_code != 200:

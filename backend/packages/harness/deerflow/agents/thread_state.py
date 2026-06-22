@@ -23,7 +23,30 @@ class ViewedImageData(TypedDict):
     mime_type: str
 
 
-# 制品列表 reducer: 合并并去重, 保持插入顺序
+def merge_sandbox(existing: SandboxState | None, new: SandboxState | None) -> SandboxState | None:
+    """Reducer for sandbox state - accepts idempotent writes only.
+
+    Multiple sandbox tools can initialize lazily in the same graph step and
+    emit the same sandbox_id via Command(update=...). LangGraph needs an
+    explicit reducer for that shared state key. Different sandbox ids in the
+    same thread indicate a lifecycle/isolation bug, so fail closed instead of
+    choosing one silently.
+    """
+    if new is None:
+        return existing
+    if existing is None:
+        return new
+
+    existing_id = existing.get("sandbox_id")
+    new_id = new.get("sandbox_id")
+    if existing_id == new_id:
+        return existing
+    raise ValueError(f"Conflicting sandbox state updates: {existing_id!r} != {new_id!r}")
+
+
+SandboxStateField = Annotated[NotRequired[SandboxState | None], merge_sandbox]
+
+
 def merge_artifacts(existing: list[str] | None, new: list[str] | None) -> list[str]:
     """Reducer for artifacts list - merges and deduplicates artifacts."""
     if existing is None:
@@ -92,7 +115,7 @@ def merge_promoted(existing: PromotedTools | None, new: PromotedTools | None) ->
 
 
 class ThreadState(AgentState):
-    sandbox: NotRequired[SandboxState | None]
+    sandbox: SandboxStateField
     thread_data: NotRequired[ThreadDataState | None]
     title: NotRequired[str | None]
     artifacts: Annotated[list[str], merge_artifacts]
