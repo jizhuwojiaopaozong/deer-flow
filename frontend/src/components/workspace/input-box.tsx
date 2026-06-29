@@ -21,7 +21,9 @@ import {
   useState,
   type ComponentProps,
   type KeyboardEvent,
+  type RefObject,
 } from "react";
+import { toast } from "sonner";
 
 import {
   PromptInput,
@@ -66,6 +68,7 @@ import { useSkills } from "@/core/skills/hooks";
 import { useSuggestionsConfig } from "@/core/suggestions/hooks";
 import type { AgentThreadContext } from "@/core/threads";
 import { textOfMessage } from "@/core/threads/utils";
+import { isIMEComposing } from "@/lib/ime";
 import { cn } from "@/lib/utils";
 
 import {
@@ -92,6 +95,20 @@ import { Tooltip } from "./tooltip";
 type InputMode = "flash" | "thinking" | "pro" | "ultra";
 
 const MAX_SKILL_SUGGESTIONS = 6;
+const SUGGESTION_TEMPLATE_PLACEHOLDER_PATTERN =
+  /\[(?:主题|来源|topic|source)\]/i;
+
+function findSuggestionTemplatePlaceholder(text: string) {
+  const match = SUGGESTION_TEMPLATE_PLACEHOLDER_PATTERN.exec(text);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    start: match.index,
+    end: match.index + match[0].length,
+  };
+}
 
 function getLeadingSlashSkillQuery(value: string): string | null {
   if (!value.startsWith("/")) {
@@ -203,9 +220,13 @@ export function InputBox({
   const { skills } = useSkills();
   const promptRootRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const promptHistoryIndexRef = useRef<number | null>(null);
+  const promptHistoryDraftRef = useRef("");
 
   const [followups, setFollowups] = useState<string[]>([]);
   const { data: suggestionsConfig } = useSuggestionsConfig();
+  const suggestionsConfigLoaded = suggestionsConfig !== undefined;
+  const suggestionsEnabled = suggestionsConfig?.enabled;
   const [followupsHidden, setFollowupsHidden] = useState(false);
   const [followupsLoading, setFollowupsLoading] = useState(false);
   const [textareaFocused, setTextareaFocused] = useState(false);
@@ -261,6 +282,44 @@ export function InputBox({
     [selectedModel],
   );
 
+  const promptHistory = useMemo(() => {
+    const history: string[] = [];
+    for (const message of thread.messages) {
+      if (message.type !== "human") {
+        continue;
+      }
+      const additionalKwargs = message.additional_kwargs;
+      if (
+        additionalKwargs &&
+        typeof additionalKwargs === "object" &&
+        Reflect.get(additionalKwargs, "hide_from_ui") === true
+      ) {
+        continue;
+      }
+      const text = textOfMessage(message)?.trim();
+      if (!text) {
+        continue;
+      }
+      if (history.at(-1) !== text) {
+        history.push(text);
+      }
+    }
+    return history;
+  }, [thread.messages]);
+
+  useEffect(() => {
+    promptHistoryIndexRef.current = null;
+    promptHistoryDraftRef.current = "";
+  }, [threadId]);
+
+  useEffect(() => {
+    const currentIndex = promptHistoryIndexRef.current;
+    if (currentIndex !== null && currentIndex >= promptHistory.length) {
+      promptHistoryIndexRef.current = null;
+      promptHistoryDraftRef.current = "";
+    }
+  }, [promptHistory.length]);
+
   const handleModelSelect = useCallback(
     (model_name: string) => {
       const model = models.find((m) => m.name === model_name);
@@ -315,6 +374,23 @@ export function InputBox({
       if (!message.text.trim() && message.files.length === 0) {
         return;
       }
+      const placeholder = findSuggestionTemplatePlaceholder(message.text);
+      if (placeholder) {
+        toast.error(t.inputBox.suggestionPlaceholderRequired);
+        requestAnimationFrame(() => {
+          const textarea = textareaRef.current;
+          if (!textarea) {
+            return;
+          }
+          textarea.focus();
+          textarea.setSelectionRange(placeholder.start, placeholder.end);
+        });
+        return Promise.reject(
+          new Error("Suggestion template placeholder is unresolved."),
+        );
+      }
+      promptHistoryIndexRef.current = null;
+      promptHistoryDraftRef.current = "";
       setFollowups([]);
       setFollowupsHidden(false);
       setFollowupsLoading(false);
@@ -347,6 +423,7 @@ export function InputBox({
       resolvedModelName,
       selectedModel?.supports_thinking,
       status,
+      t.inputBox.suggestionPlaceholderRequired,
     ],
   );
 
@@ -489,6 +566,91 @@ export function InputBox({
     ],
   );
 
+  const setPromptHistoryValue = useCallback(
+    (value: string) => {
+      textInput.setInput(value);
+      requestAnimationFrame(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) {
+          return;
+        }
+        textarea.focus();
+        textarea.setSelectionRange(value.length, value.length);
+      });
+    },
+    [textInput],
+  );
+
+  const handlePromptHistoryKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        isIMEComposing(event) ||
+        promptHistory.length === 0 ||
+        (event.key !== "ArrowUp" && event.key !== "ArrowDown")
+      ) {
+        return;
+      }
+
+      const currentValue = textInput.value ?? "";
+      const currentHistoryIndex = promptHistoryIndexRef.current;
+      const isBrowsingHistory = currentHistoryIndex !== null;
+
+      if (!isBrowsingHistory && currentValue.length > 0) {
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        const nextIndex = isBrowsingHistory
+          ? Math.max(currentHistoryIndex - 1, 0)
+          : promptHistory.length - 1;
+        if (!isBrowsingHistory) {
+          promptHistoryDraftRef.current = currentValue;
+        }
+        promptHistoryIndexRef.current = nextIndex;
+        setPromptHistoryValue(promptHistory[nextIndex] ?? "");
+        return;
+      }
+
+      if (!isBrowsingHistory) {
+        return;
+      }
+
+      event.preventDefault();
+      if (currentHistoryIndex >= promptHistory.length - 1) {
+        promptHistoryIndexRef.current = null;
+        setPromptHistoryValue(promptHistoryDraftRef.current);
+        promptHistoryDraftRef.current = "";
+        return;
+      }
+
+      const nextIndex = currentHistoryIndex + 1;
+      promptHistoryIndexRef.current = nextIndex;
+      setPromptHistoryValue(promptHistory[nextIndex] ?? "");
+    },
+    [promptHistory, setPromptHistoryValue, textInput.value],
+  );
+
+  const handlePromptTextareaKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      handleSkillSuggestionKeyDown(event);
+      if (event.defaultPrevented) {
+        return;
+      }
+      handlePromptHistoryKeyDown(event);
+    },
+    [handlePromptHistoryKeyDown, handleSkillSuggestionKeyDown],
+  );
+
+  const handlePromptTextareaChange = useCallback(() => {
+    promptHistoryIndexRef.current = null;
+    promptHistoryDraftRef.current = "";
+  }, []);
+
   const showFollowups =
     !disabled &&
     !isWelcomeMode &&
@@ -527,7 +689,7 @@ export function InputBox({
     if (!lastAiId || lastAiId === lastGeneratedForAiIdRef.current) {
       return;
     }
-    if (suggestionsConfig === undefined) {
+    if (!suggestionsConfigLoaded) {
       return;
     }
     lastGeneratedForAiIdRef.current = lastAiId;
@@ -547,7 +709,7 @@ export function InputBox({
       return;
     }
 
-    if (!suggestionsConfig?.enabled) {
+    if (!suggestionsEnabled) {
       setFollowups([]);
       return;
     }
@@ -593,8 +755,9 @@ export function InputBox({
     disabled,
     isMock,
     status,
+    suggestionsConfigLoaded,
+    suggestionsEnabled,
     threadId,
-    suggestionsConfig?.enabled,
   ]);
 
   return (
@@ -708,8 +871,9 @@ export function InputBox({
             autoFocus={autoFocus}
             defaultValue={initialValue}
             onBlur={() => setTextareaFocused(false)}
+            onChange={handlePromptTextareaChange}
             onFocus={() => setTextareaFocused(true)}
-            onKeyDown={handleSkillSuggestionKeyDown}
+            onKeyDown={handlePromptTextareaKeyDown}
             ref={textareaRef}
           />
         </PromptInputBody>
@@ -1069,7 +1233,7 @@ export function InputBox({
         searchParams.get("mode") !== "skill" &&
         !showSkillSuggestions && (
           <div className="flex items-center justify-center pt-2">
-            <SuggestionList />
+            <SuggestionList textareaRef={textareaRef} />
           </div>
         )}
 
@@ -1098,28 +1262,27 @@ export function InputBox({
   );
 }
 
-function SuggestionList() {
+function SuggestionList({
+  textareaRef,
+}: {
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
+}) {
   const { t } = useI18n();
   const { textInput } = usePromptInputController();
   const handleSuggestionClick = useCallback(
     (prompt: string | undefined) => {
       if (!prompt) return;
       textInput.setInput(prompt);
-      setTimeout(() => {
-        const textarea = document.querySelector<HTMLTextAreaElement>(
-          "textarea[name='message']",
-        );
-        if (textarea) {
-          const selStart = prompt.indexOf("[");
-          const selEnd = prompt.indexOf("]");
-          if (selStart !== -1 && selEnd !== -1) {
-            textarea.setSelectionRange(selStart, selEnd + 1);
-            textarea.focus();
-          }
+      requestAnimationFrame(() => {
+        const textarea = textareaRef.current;
+        const placeholder = findSuggestionTemplatePlaceholder(prompt);
+        if (textarea && placeholder) {
+          textarea.focus();
+          textarea.setSelectionRange(placeholder.start, placeholder.end);
         }
-      }, 500);
+      });
     },
-    [textInput],
+    [textareaRef, textInput],
   );
   return (
     <Suggestions className="min-h-16 w-full max-w-full justify-center px-4 sm:w-fit sm:px-0">

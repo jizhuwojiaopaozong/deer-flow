@@ -24,12 +24,9 @@ import logging
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import Any, Literal, cast
 
 from langgraph.checkpoint.base import empty_checkpoint
-
-if TYPE_CHECKING:
-    from langchain_core.messages import HumanMessage
 
 from deerflow.config.app_config import AppConfig
 from deerflow.runtime.serialization import serialize
@@ -653,32 +650,6 @@ def _extract_llm_error_fallback_message(value: Any) -> str | None:
     return walk(value)
 
 
-def _extract_human_message(graph_input: dict) -> HumanMessage | None:
-    """Extract or construct a HumanMessage from graph_input for event recording.
-
-    Returns a LangChain HumanMessage so callers can use .model_dump() to get
-    the checkpoint-aligned serialization format.
-    """
-    from langchain_core.messages import HumanMessage
-
-    messages = graph_input.get("messages")
-    if not messages:
-        return None
-    last = messages[-1] if isinstance(messages, list) else messages
-    if isinstance(last, HumanMessage):
-        return last
-    if isinstance(last, str):
-        return HumanMessage(content=last) if last else None
-    if hasattr(last, "content"):
-        content = last.content
-        return HumanMessage(content=content)
-    if isinstance(last, dict):
-        content = last.get("content", "")
-        return HumanMessage(content=content) if content else None
-    return None
-
-
-# 解包多模式或子图流项: 将 (mode, chunk) 元组分离
 def _unpack_stream_item(
     item: Any,
     lg_modes: list[str],

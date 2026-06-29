@@ -6,11 +6,14 @@ Mirrors the pattern used by ``deerflow/sandbox/sandbox_provider.py``.
 
 from __future__ import annotations
 
+import threading
+
 from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
 from deerflow.skills.storage.skill_storage import SkillStorage
 
 _default_skill_storage: SkillStorage | None = None
 _default_skill_storage_config: object | None = None  # AppConfig identity the singleton was built from
+_skill_storage_lock = threading.Lock()
 
 
 # 中文说明：获取或创建技能存储实例，支持单例和按需创建两种模式
@@ -64,18 +67,27 @@ def get_or_new_skill_storage(**kwargs) -> SkillStorage:
         return _default_skill_storage
 
     app_config_now = get_app_config()
-    if _default_skill_storage is None or _default_skill_storage_config is not app_config_now:
-        _default_skill_storage = _make_storage(app_config_now.skills, **kwargs)
-        _default_skill_storage_config = app_config_now
-    return _default_skill_storage
+
+    # Build the singleton under the lock with a double-check so racing cold-start
+    # callers construct exactly one instance, and reset_skill_storage() can't null
+    # the global out from under a concurrent read. We construct *inside* the lock
+    # — mirroring get_memory_storage() rather than sandbox_provider's build-outside-
+    # then-discard-the-loser — because SkillStorage has no teardown hook, so an
+    # orphaned instance from a losing racer could not be cleaned up.
+    with _skill_storage_lock:
+        if _default_skill_storage is None or _default_skill_storage_config is not app_config_now:
+            _default_skill_storage = _make_storage(app_config_now.skills, **kwargs)
+            _default_skill_storage_config = app_config_now
+        return _default_skill_storage
 
 
 # 中文说明：清除缓存的技能存储单例，用于测试和热重载
 def reset_skill_storage() -> None:
     """Clear the cached singleton (used in tests and hot-reload scenarios)."""
     global _default_skill_storage, _default_skill_storage_config
-    _default_skill_storage = None
-    _default_skill_storage_config = None
+    with _skill_storage_lock:
+        _default_skill_storage = None
+        _default_skill_storage_config = None
 
 
 __all__ = [

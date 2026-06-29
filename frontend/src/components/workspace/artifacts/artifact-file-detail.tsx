@@ -19,7 +19,6 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@/components/ai-elements/artifact";
-import { ClipboardSafeStreamdown } from "@/components/ai-elements/streamdown";
 import { Button } from "@/components/ui/button";
 import { Select, SelectItem } from "@/components/ui/select";
 import {
@@ -43,7 +42,7 @@ import { writeTextToClipboard } from "@/core/clipboard";
 import { useI18n } from "@/core/i18n/hooks";
 import { findToolCallResult } from "@/core/messages/utils";
 import { installSkill } from "@/core/skills/api";
-import { streamdownPlugins } from "@/core/streamdown";
+import { SafeStreamdown } from "@/core/streamdown/components";
 import {
   canBrowserPreviewFile,
   checkCodeFile,
@@ -59,6 +58,7 @@ import { useThread } from "../messages/context";
 import { Tooltip } from "../tooltip";
 
 import { useArtifacts } from "./context";
+import { artifactMarkdownPlugins } from "./markdown-preview-plugins";
 
 const WRITE_FILE_PREVIEW_REFRESH_INTERVAL_MS = 3000;
 
@@ -84,6 +84,41 @@ export function ArtifactFileDetail({
     }
     return filepathFromProps;
   }, [filepathFromProps, isWriteFile]);
+  // Keep these local because ChatBox replaces context artifacts with thread state.
+  const [openedPresentedFilepaths, setOpenedPresentedFilepaths] = useState<
+    string[]
+  >(() => {
+    if (isWriteFile || artifacts.includes(filepath)) {
+      return [];
+    }
+    return [filepath];
+  });
+  useEffect(() => {
+    if (isWriteFile || artifacts.includes(filepath)) {
+      return;
+    }
+    setOpenedPresentedFilepaths((current) => {
+      if (current.includes(filepath)) {
+        return current;
+      }
+      return [...current, filepath];
+    });
+  }, [artifacts, filepath, isWriteFile]);
+  const artifactOptions = useMemo(() => {
+    if (isWriteFile) {
+      return artifacts;
+    }
+    const currentIsPresented = !artifacts.includes(filepath);
+    const presentedFilepaths =
+      currentIsPresented && !openedPresentedFilepaths.includes(filepath)
+        ? [...openedPresentedFilepaths, filepath]
+        : openedPresentedFilepaths;
+    const presentedSet = new Set(presentedFilepaths);
+    return [
+      ...presentedFilepaths,
+      ...artifacts.filter((artifact) => !presentedSet.has(artifact)),
+    ];
+  }, [artifacts, filepath, isWriteFile, openedPresentedFilepaths]);
   const isSkillFile = useMemo(() => {
     return filepath.endsWith(".skill");
   }, [filepath]);
@@ -178,9 +213,9 @@ export function ArtifactFileDetail({
                 </SelectTrigger>
                 <SelectContent className="select-none">
                   <SelectGroup>
-                    {(artifacts ?? []).map((filepath) => (
-                      <SelectItem key={filepath} value={filepath}>
-                        {getFileName(filepath)}
+                    {artifactOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {getFileName(option)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -462,13 +497,13 @@ export function ArtifactFilePreview({
   if (language === "markdown") {
     return (
       <div className="size-full px-4">
-        <ClipboardSafeStreamdown
+        <SafeStreamdown
           className="size-full"
-          {...streamdownPlugins}
+          {...artifactMarkdownPlugins}
           components={{ a: ArtifactLink }}
         >
           {content ?? ""}
-        </ClipboardSafeStreamdown>
+        </SafeStreamdown>
       </div>
     );
   }
