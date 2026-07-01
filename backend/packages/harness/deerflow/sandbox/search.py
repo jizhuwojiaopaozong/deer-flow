@@ -45,6 +45,7 @@ IGNORE_PATTERNS = [
     "*.log",
     "*.tmp",
     "*.temp",
+    ".upload-*.part",
     "*.bak",
     "*.cache",
     ".cache",
