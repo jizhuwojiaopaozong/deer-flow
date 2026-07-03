@@ -8,8 +8,7 @@ import logging
 from typing import Any
 from weakref import WeakValueDictionary
 
-from langchain.tools import ToolRuntime, tool
-from langgraph.typing import ContextT
+from langchain.tools import tool
 
 from deerflow.agents.lead_agent.prompt import refresh_skills_system_prompt_cache_async
 from deerflow.skills.security_scanner import scan_skill_content
@@ -34,7 +33,7 @@ def _get_lock(name: str) -> asyncio.Lock:
 
 
 # 获取当前线程 ID: 用于记录操作历史
-def _get_thread_id(runtime: ToolRuntime[ContextT, ThreadState] | None) -> str | None:
+def _get_thread_id(runtime: Runtime | None) -> str | None:
     if runtime is None:
         return None
     if runtime.context and runtime.context.get("thread_id"):
@@ -71,7 +70,7 @@ async def _to_thread(func, /, *args, **kwargs):
 
 # 技能管理核心实现: 处理 create/edit/patch/delete/write_file/remove_file 操作
 async def _skill_manage_impl(
-    runtime: ToolRuntime[ContextT, ThreadState],
+    runtime: Runtime,
     action: str,
     name: str,
     content: str | None = None,
@@ -211,7 +210,7 @@ async def _skill_manage_impl(
 # 技能管理工具入口: LangChain 工具接口, 委托给核心实现
 @tool("skill_manage", parse_docstring=True)
 async def skill_manage_tool(
-    runtime: ToolRuntime[ContextT, ThreadState],
+    runtime: Runtime,
     action: str,
     name: str,
     content: str | None = None,
