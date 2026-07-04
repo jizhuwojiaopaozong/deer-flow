@@ -37,6 +37,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_LEGACY_SUMMARY_MESSAGE_NAME = "summary"
+
+
+def _is_user_visible_human_message(message: BaseMessage) -> bool:
+    return isinstance(message, HumanMessage) and message.name != _LEGACY_SUMMARY_MESSAGE_NAME and message.additional_kwargs.get("hide_from_ui") is not True
+
 
 # 中文说明：运行日志记录器，捕获 LLM 调用、工具执行和链事件
 class RunJournal(BaseCallbackHandler):
@@ -204,7 +210,7 @@ class RunJournal(BaseCallbackHandler):
         if caller == "lead_agent" and not self._first_human_msg and messages:
             for batch in reversed(messages):
                 for m in reversed(batch):
-                    if isinstance(m, HumanMessage) and m.name != "summary" and m.additional_kwargs.get("hide_from_ui") is not True:
+                    if _is_user_visible_human_message(m):
                         self.set_first_human_message(m.text)
                         self._put(
                             event_type="llm.human.input",

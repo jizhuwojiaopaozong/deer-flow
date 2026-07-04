@@ -5,6 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from deerflow.config.runtime_paths import project_root, resolve_path
+from deerflow.constants import DEFAULT_SKILLS_CONTAINER_PATH
 
 
 # 中文说明：返回源码树中的技能目录位置，用于单仓库兼容
@@ -28,7 +29,7 @@ class SkillsConfig(BaseModel):
         description=("Path to skills directory. If not specified, defaults to `skills` under the caller project root, falling back to the legacy repo-root location for monorepo compatibility."),
     )
     container_path: str = Field(
-        default="/mnt/skills",
+        default=DEFAULT_SKILLS_CONTAINER_PATH,
         description="Path where skills are mounted in the sandbox container",
     )
 
