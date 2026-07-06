@@ -36,8 +36,7 @@ class SecretRequirement:
     optional: bool = False
 
 
-@dataclass
-# 中文说明：技能数据类，包含名称、描述、路径和分类等元信息
+@dataclass(frozen=True)
 class Skill:
     """Represents a skill with its metadata and file path"""
 
@@ -48,11 +47,14 @@ class Skill:
     skill_file: Path
     relative_path: Path  # Relative path from category root to skill directory
     category: SkillCategory  # 'public' or 'custom'
-    allowed_tools: list[str] | None = None
+    allowed_tools: tuple[str, ...] | None = None
     enabled: bool = False  # Whether this skill is enabled
-    required_secrets: list[SecretRequirement] = field(default_factory=list)
+    required_secrets: tuple[SecretRequirement, ...] = field(default_factory=tuple)
+    # Whether declared secrets may bind when the skill is in-context via an
+    # autonomous model load (skill_context), or only on explicit /slash
+    # activation. Frontmatter: ``secrets-autonomous`` (default true).
+    secrets_autonomous: bool = True
 
-    # 中文说明：返回技能相对于分类根目录的路径
     @property
     def skill_path(self) -> str:
         """Returns the relative path from the category root (skills/{category}) to this skill's directory"""
