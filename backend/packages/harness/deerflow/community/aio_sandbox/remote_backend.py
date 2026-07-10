@@ -23,6 +23,7 @@ import logging
 import requests
 
 from deerflow.runtime.user_context import get_effective_user_id
+from deerflow.skills.storage import user_should_see_legacy_skills
 
 from .backend import SandboxBackend
 from .sandbox_info import SandboxInfo
@@ -147,6 +148,7 @@ class RemoteSandboxBackend(SandboxBackend):
         """POST /api/sandboxes → create Pod + Service."""
         del extra_mounts
         effective_user_id = user_id or get_effective_user_id()
+        include_legacy_skills = user_should_see_legacy_skills(effective_user_id)
         try:
             resp = requests.post(
                 f"{self._provisioner_url}/api/sandboxes",
@@ -154,6 +156,7 @@ class RemoteSandboxBackend(SandboxBackend):
                     "sandbox_id": sandbox_id,
                     "thread_id": thread_id,
                     "user_id": effective_user_id,
+                    "include_legacy_skills": include_legacy_skills,
                 },
                 timeout=30,
             )

@@ -1,7 +1,15 @@
 # 中文说明：延迟工具加载配置，通过 tool_search 在运行时动态发现 MCP 工具
 """Configuration for deferred tool loading via tool_search."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+AUTO_PROMOTE_TOP_K_MIN = 1
+AUTO_PROMOTE_TOP_K_MAX = 5
+
+
+def clamp_auto_promote_top_k(value: int) -> int:
+    """Clamp the global MCP routing auto-promote breadth to PR2's range."""
+    return max(AUTO_PROMOTE_TOP_K_MIN, min(AUTO_PROMOTE_TOP_K_MAX, int(value)))
 
 
 # 中文说明：工具搜索配置类，启用后 MCP 工具不直接加载到代理上下文中
@@ -17,6 +25,15 @@ class ToolSearchConfig(BaseModel):
         default=False,
         description="Defer tools and enable tool_search",
     )
+    auto_promote_top_k: int = Field(
+        default=3,
+        description="Maximum number of deferred MCP tool schemas auto-promoted from routing metadata per model call",
+    )
+
+    @field_validator("auto_promote_top_k")
+    @classmethod
+    def _clamp_auto_promote_top_k(cls, value: int) -> int:
+        return clamp_auto_promote_top_k(value)
 
 
 _tool_search_config: ToolSearchConfig | None = None
