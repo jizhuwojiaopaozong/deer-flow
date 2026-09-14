@@ -15,9 +15,27 @@ consumers read the structured facts carried inside
   backend recorded.
 - ``subagent_result_brief`` / ``subagent_result_sha256`` (optional):
   bounded completed-result metadata plus a digest of the full result.
+- ``subagent_model_name`` (optional): effective DeerFlow model identifier used
+  by this delegated run.
+- ``subagent_token_usage`` (optional): final cumulative ``input_tokens`` /
+  ``output_tokens`` / ``total_tokens`` snapshot when the provider reported it.
+- ``subagent_tool_receipts`` (optional): the child's harvested tool receipts
+  (RFC #4651 PR2), transported in full; present on terminal statuses when
+  the run produced stamped receipts.
+- ``subagent_receipt_verdict`` (optional, ``completed`` only): the
+  parent-side citation-check verdict — advisory execution evidence; the
+  ``citation_resolved`` vocabulary never claims task acceptance.
+- ``subagent_acceptance_verdict`` (optional, ``completed`` only, RFC #4651
+  PR4): the deterministic acceptance-checklist verdict — per-criterion
+  ``checked``/``holds`` leaves; unchecked criteria render UNVERIFIED, never
+  silently passed.
 
 The shared fixture at ``contracts/subagent_status_contract.json`` pins
-the enum values across Python and TypeScript.
+the enum values (``valid_status_values`` / ``valid_stop_reason_values``)
+across Python and TypeScript. ``subagent_acceptance_verdict`` is
+deliberately outside that fixture: it is a validated JSON structure (see
+``validate_acceptance_verdict``), not an enum vocabulary, and no
+TypeScript consumer reads it.
 """
 
 from __future__ import annotations
@@ -25,13 +43,22 @@ from __future__ import annotations
 import hashlib
 import re
 from collections.abc import Mapping
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
+
+from deerflow.agents.middlewares.receipt_verification import ReceiptVerdict, validate_receipt_verdict
+from deerflow.agents.middlewares.tool_receipt import is_valid_receipt
+from deerflow.subagents.acceptance_checks import AcceptanceVerdict, validate_acceptance_verdict
 
 SUBAGENT_STATUS_KEY = "subagent_status"
 SUBAGENT_STOP_REASON_KEY = "subagent_stop_reason"
 SUBAGENT_ERROR_KEY = "subagent_error"
 SUBAGENT_RESULT_BRIEF_KEY = "subagent_result_brief"
 SUBAGENT_RESULT_SHA256_KEY = "subagent_result_sha256"
+SUBAGENT_MODEL_NAME_KEY = "subagent_model_name"
+SUBAGENT_TOKEN_USAGE_KEY = "subagent_token_usage"
+SUBAGENT_TOOL_RECEIPTS_KEY = "subagent_tool_receipts"
+SUBAGENT_RECEIPT_VERDICT_KEY = "subagent_receipt_verdict"
+SUBAGENT_ACCEPTANCE_VERDICT_KEY = "subagent_acceptance_verdict"
 SUBAGENT_METADATA_TEXT_MAX_CHARS = 2000
 
 #: The producer always emits ``hashlib.sha256(...).hexdigest()`` — 64
@@ -105,6 +132,9 @@ class StructuredSubagentResult(TypedDict):
     result_brief: NotRequired[str]
     result_sha256: NotRequired[str]
     error: NotRequired[str]
+    tool_receipts: NotRequired[list[dict[str, Any]]]
+    receipt_verdict: NotRequired[ReceiptVerdict]
+    acceptance_verdict: NotRequired[AcceptanceVerdict]
 
 
 def _bound_metadata_text(text: str, cap: int = SUBAGENT_METADATA_TEXT_MAX_CHARS) -> str:
@@ -127,7 +157,12 @@ def make_subagent_additional_kwargs(
     result: str | None = None,
     error: str | None = None,
     stop_reason: SubagentStopReasonValue | None = None,
-) -> dict[str, str]:
+    model_name: str | None = None,
+    token_usage: Mapping[str, object] | None = None,
+    tool_receipts: list[dict[str, Any]] | None = None,
+    receipt_verdict: Mapping[str, object] | None = None,
+    acceptance_verdict: Mapping[str, object] | None = None,
+) -> dict[str, object]:
     """Build the ``additional_kwargs`` payload the middleware stamps.
 
     Drops the error field when blank so the JSON wire format never carries
@@ -145,7 +180,7 @@ def make_subagent_additional_kwargs(
         raise ValueError(f"invalid subagent status {status!r}; expected one of {SUBAGENT_STATUS_VALUES}")
     if stop_reason is not None and stop_reason not in SUBAGENT_STOP_REASON_VALUES:
         raise ValueError(f"invalid subagent stop_reason {stop_reason!r}; expected one of {SUBAGENT_STOP_REASON_VALUES}")
-    payload: dict[str, str] = {SUBAGENT_STATUS_KEY: status}
+    payload: dict[str, object] = {SUBAGENT_STATUS_KEY: status}
     if status in _RESULT_BEARING_STATUSES and isinstance(result, str) and result.strip():
         payload[SUBAGENT_RESULT_BRIEF_KEY] = _bound_metadata_text(result)
         payload[SUBAGENT_RESULT_SHA256_KEY] = hashlib.sha256(result.encode("utf-8")).hexdigest()
@@ -155,7 +190,44 @@ def make_subagent_additional_kwargs(
         payload[SUBAGENT_ERROR_KEY] = _bound_metadata_text(error)
     if stop_reason is not None:
         payload[SUBAGENT_STOP_REASON_KEY] = stop_reason
+    if isinstance(model_name, str) and model_name.strip():
+        payload[SUBAGENT_MODEL_NAME_KEY] = model_name.strip()
+    normalized_usage = normalize_token_usage(token_usage)
+    if normalized_usage is not None:
+        payload[SUBAGENT_TOKEN_USAGE_KEY] = normalized_usage
+    if isinstance(tool_receipts, list):
+        cleaned_receipts = [dict(receipt) for receipt in tool_receipts if is_valid_receipt(receipt)]
+        if cleaned_receipts:
+            payload[SUBAGENT_TOOL_RECEIPTS_KEY] = cleaned_receipts
+    validated_verdict = validate_receipt_verdict(receipt_verdict)
+    if validated_verdict is not None:
+        payload[SUBAGENT_RECEIPT_VERDICT_KEY] = validated_verdict
+    validated_acceptance = validate_acceptance_verdict(acceptance_verdict)
+    if validated_acceptance is not None:
+        payload[SUBAGENT_ACCEPTANCE_VERDICT_KEY] = validated_acceptance
     return payload
+
+
+def normalize_token_usage(value: Any) -> dict[str, int] | None:
+    """Validate a cumulative token-usage mapping into the contract shape.
+
+    The single shared validator for both metadata surfaces — the terminal
+    ``ToolMessage`` metadata (here) and the persisted ``subagent.step`` /
+    ``subagent.end`` run events (``step_events.py``). Keeping one function
+    prevents the two from drifting (e.g. one later accepting an extra token
+    field the other rejects, silently dropping usage on one path). Requires
+    non-negative ``int`` values for all three keys — ``bool`` is rejected — and
+    returns ``None`` for any non-mapping or malformed input.
+    """
+    if not isinstance(value, Mapping):
+        return None
+    normalized: dict[str, int] = {}
+    for key in ("input_tokens", "output_tokens", "total_tokens"):
+        amount = value.get(key)
+        if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
+            return None
+        normalized[key] = amount
+    return normalized
 
 
 def format_subagent_result_message(
@@ -248,4 +320,15 @@ def read_subagent_result_metadata(
         payload["stop_reason"] = raw_stop_reason
     elif legacy_stop_reason is not None:
         payload["stop_reason"] = legacy_stop_reason
+    raw_receipts = additional_kwargs.get(SUBAGENT_TOOL_RECEIPTS_KEY)
+    if isinstance(raw_receipts, list):
+        cleaned_receipts = [dict(receipt) for receipt in raw_receipts if is_valid_receipt(receipt)]
+        if cleaned_receipts:
+            payload["tool_receipts"] = cleaned_receipts
+    validated_verdict = validate_receipt_verdict(additional_kwargs.get(SUBAGENT_RECEIPT_VERDICT_KEY))
+    if validated_verdict is not None:
+        payload["receipt_verdict"] = validated_verdict
+    validated_acceptance = validate_acceptance_verdict(additional_kwargs.get(SUBAGENT_ACCEPTANCE_VERDICT_KEY))
+    if validated_acceptance is not None:
+        payload["acceptance_verdict"] = validated_acceptance
     return payload

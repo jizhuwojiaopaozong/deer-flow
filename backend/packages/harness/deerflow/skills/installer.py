@@ -8,12 +8,14 @@ Both Gateway and Client delegate to these functions.
 import asyncio
 import concurrent.futures
 import logging
+import os
 import posixpath
 import shutil
 import stat
 import zipfile
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
+from deerflow.skills.package_files import is_code_path, is_executable_binary_prefix
 from deerflow.skills.permissions import make_skill_tree_sandbox_readable
 from deerflow.skills.security_scanner import scan_skill_content
 from deerflow.skills.security_static_scanner import (
@@ -29,21 +31,6 @@ logger = logging.getLogger(__name__)
 
 _PROMPT_INPUT_DIRS = {"references", "templates"}
 _PROMPT_INPUT_SUFFIXES = frozenset({".json", ".markdown", ".md", ".rst", ".txt", ".yaml", ".yml"})
-_CODE_SUFFIXES = frozenset({".bash", ".cjs", ".js", ".mjs", ".php", ".pl", ".ps1", ".py", ".rb", ".sh", ".ts", ".zsh"})
-# Full magics per variant — a shorter shared prefix would also match
-# non-executable data files.
-_EXECUTABLE_MAGIC_PREFIXES = (
-    b"\x7fELF",  # ELF
-    b"MZ",  # PE/DOS
-    b"\xfe\xed\xfa\xce",  # Mach-O 32-bit big-endian
-    b"\xfe\xed\xfa\xcf",  # Mach-O 64-bit big-endian
-    b"\xce\xfa\xed\xfe",  # Mach-O 32-bit little-endian
-    b"\xcf\xfa\xed\xfe",  # Mach-O 64-bit little-endian
-    b"\xca\xfe\xba\xbe",  # Mach-O fat binary big-endian
-    b"\xbe\xba\xfe\xca",  # Mach-O fat binary little-endian
-    b"\xca\xfe\xba\xbf",  # Mach-O fat64 binary big-endian
-    b"\xbf\xba\xfe\xca",  # Mach-O fat64 binary little-endian
-)
 
 
 # 中文说明：技能已存在异常，当同名技能已安装时抛出
@@ -66,7 +53,21 @@ class SkillSecurityScanError(ValueError):
 
 # 中文说明：检测 ZIP 成员路径是否包含绝对路径或目录穿越
 def is_unsafe_zip_member(info: zipfile.ZipInfo) -> bool:
-    """Return True if the zip member path is absolute or attempts directory traversal."""
+    """Return True if the zip member path is absolute, attempts directory
+    traversal, or contains a colon.
+
+    A colon has no legitimate use in a relative archive member path — zip
+    entries always use ``/`` separators, and a real Windows drive prefix
+    (``C:\\...``) is already rejected above as absolute. But on Windows/NTFS,
+    a colon anywhere else in a path (e.g. ``scripts/run.sh:hidden.txt``)
+    addresses an Alternate Data Stream on the preceding path component
+    instead of creating a new file: it silently attaches extra content to
+    ``scripts/run.sh`` rather than creating a sibling file. That stream is
+    invisible to ``Path.rglob()`` / ``os.walk()``-based listing, so it would
+    let an archive smuggle content past directory-based security scanning
+    while the content still lands on disk. Reject outright rather than
+    trying to allow-list "safe" colon positions.
+    """
     name = info.filename
     if not name:
         return False
@@ -80,6 +81,8 @@ def is_unsafe_zip_member(info: zipfile.ZipInfo) -> bool:
         return True
     if ".." in path.parts:
         return True
+    if ":" in name:
+        return True
     return False
 
 
@@ -88,11 +91,6 @@ def is_symlink_member(info: zipfile.ZipInfo) -> bool:
     """Detect symlinks based on the external attributes stored in the ZipInfo."""
     mode = info.external_attr >> 16
     return stat.S_ISLNK(mode)
-
-
-def is_executable_binary_prefix(prefix: bytes) -> bool:
-    """Detect ELF, PE, and Mach-O executables by magic bytes."""
-    return prefix.startswith(_EXECUTABLE_MAGIC_PREFIXES)
 
 
 def should_ignore_archive_entry(path: Path) -> bool:
@@ -124,6 +122,7 @@ def safe_extract_skill_archive(
     zip_ref: zipfile.ZipFile,
     dest_path: Path,
     max_total_size: int = 512 * 1024 * 1024,
+    max_entries: int = 4096,
 ) -> None:
     """Safely extract a skill archive with security protections.
 
@@ -131,15 +130,28 @@ def safe_extract_skill_archive(
     - Reject absolute paths and directory traversal (..).
     - Skip symlink entries instead of materialising them.
     - Enforce a hard limit on total uncompressed size (zip bomb defence).
+    - Enforce a hard limit on member count (zip bomb defence by entry count —
+      a huge number of tiny/empty members can be cheap to store yet still
+      slow to extract, independent of total size).
     - Reject executable binaries (ELF/PE/Mach-O) by magic bytes.
 
     Raises:
-        ValueError: If unsafe members, executable binaries, or size limit exceeded.
+        ValueError: If unsafe members, executable binaries, entry count, or size limit exceeded.
     """
     dest_root = dest_path.resolve()
     total_written = 0
 
-    for info in zip_ref.infolist():
+    infos = zip_ref.infolist()
+    if len(infos) > max_entries:
+        # Early-abort before any per-member work below — mirrors the same
+        # early-abort in skillscan/orchestrator.py::scan_archive_preflight
+        # (its comment: "a huge member count is a bounded DoS vector even
+        # when the total size is small"). That scan is optional
+        # (skill_scan.enabled); this check must hold unconditionally since
+        # it lives in the extraction path every install goes through.
+        raise ValueError(f"Skill archive contains too many entries ({len(infos)} > {max_entries}).")
+
+    for info in infos:
         if is_unsafe_zip_member(info):
             raise ValueError(f"Archive contains unsafe member path: {info.filename!r}")
 
@@ -167,6 +179,8 @@ def safe_extract_skill_archive(
                 if total_written > max_total_size:
                     raise ValueError("Skill archive is too large or appears highly compressed.")
                 dst.write(chunk)
+        if os.name == "posix":
+            member_path.chmod(0o755 if (info.external_attr >> 16) & 0o111 else 0o644)
 
 
 def _is_script_support_file(rel_path: Path) -> bool:
@@ -187,20 +201,14 @@ def _has_shebang(path: Path) -> bool:
         return False
 
 
-def _is_code_file_by_name(rel_path: Path) -> bool:
-    """Pure name-based code classification: scripts/ members and code suffixes."""
-    if _is_script_support_file(rel_path):
-        return True
-    return rel_path.suffix.lower() in _CODE_SUFFIXES
-
-
 async def _is_code_file(path: Path, rel_path: Path) -> bool:
     """Classify code files anywhere in the tree for the executable scan policy.
 
-    Name checks are pure and stay on the event loop; only the shebang
-    sniff for extensionless files reads the file and is offloaded.
+    Applies :func:`is_code_file` lazily: name checks are pure and stay on the
+    event loop; only the shebang sniff for extensionless files reads the file
+    and is offloaded.
     """
-    if _is_code_file_by_name(rel_path):
+    if is_code_path(rel_path):
         return True
     return not rel_path.suffix and await asyncio.to_thread(_has_shebang, path)
 

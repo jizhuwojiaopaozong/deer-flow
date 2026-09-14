@@ -49,7 +49,7 @@ class LoopDetectionConfig(BaseModel):
     max_tracked_threads: int = Field(
         default=100,
         ge=1,
-        description="Maximum number of thread histories to keep in memory",
+        description="Maximum number of thread/run histories to keep in memory (legacy field name)",
     )
     tool_freq_warn: int = Field(
         default=30,

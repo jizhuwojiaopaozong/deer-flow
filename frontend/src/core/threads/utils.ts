@@ -2,6 +2,22 @@ import type { Message } from "@langchain/langgraph-sdk";
 
 import type { AgentThread, AgentThreadContext } from "./types";
 
+// Namespaced to match other internal metadata keys (``deerflow_sidecar``,
+// ``deerflow_branch``) so it cannot collide with a future feature or a
+// client-supplied key. Keep in sync with the backend thread_meta constant and
+// the E2E mock-api constant.
+export const THREAD_PINNED_METADATA_KEY = "deerflow_pinned";
+export const THREAD_ARCHIVED_METADATA_KEY = "deerflow_archived";
+
+export function isThreadArchived(thread: Pick<AgentThread, "metadata">) {
+  return thread.metadata?.[THREAD_ARCHIVED_METADATA_KEY] === true;
+}
+
+// Reserved metadata key recording a thread's project membership
+// (``metadata.deerflow_project_id``). Keep in sync with the backend
+// thread_meta constant and the E2E mock-api constant.
+export const THREAD_PROJECT_METADATA_KEY = "deerflow_project_id";
+
 export type ChannelThreadSource = {
   type: "im_channel";
   provider: string;
@@ -21,6 +37,7 @@ export function pathOfThread(
   context?: Pick<AgentThreadContext, "agent_name"> | null,
 ) {
   const threadId = typeof thread === "string" ? thread : thread.thread_id;
+  const encodedThreadId = encodeURIComponent(threadId);
   let agentName: string | undefined;
   if (typeof thread === "string") {
     agentName = context?.agent_name;
@@ -35,8 +52,8 @@ export function pathOfThread(
   }
 
   return agentName
-    ? `/workspace/agents/${encodeURIComponent(agentName)}/chats/${threadId}`
-    : `/workspace/chats/${threadId}`;
+    ? `/workspace/agents/${encodeURIComponent(agentName)}/chats/${encodedThreadId}`
+    : `/workspace/chats/${encodedThreadId}`;
 }
 
 export function textOfMessage(message: Message) {
@@ -59,7 +76,35 @@ export function titleOfThread(thread: AgentThread) {
   return thread.values?.title ?? "Untitled";
 }
 
+export function isThreadPinned(thread: Pick<AgentThread, "metadata">) {
+  return thread.metadata?.[THREAD_PINNED_METADATA_KEY] === true;
+}
+
+export function projectIdOfThread(
+  thread: Pick<AgentThread, "metadata">,
+): string | null {
+  const projectId = thread.metadata?.[THREAD_PROJECT_METADATA_KEY];
+  return typeof projectId === "string" && projectId.length > 0
+    ? projectId
+    : null;
+}
+
+export function sortPinnedThreads<T extends Pick<AgentThread, "metadata">>(
+  threads: readonly T[],
+) {
+  return threads
+    .map((thread, index) => ({ thread, index }))
+    .sort((left, right) => {
+      const pinnedDiff =
+        Number(isThreadPinned(right.thread)) -
+        Number(isThreadPinned(left.thread));
+      return pinnedDiff || left.index - right.index;
+    })
+    .map(({ thread }) => thread);
+}
+
 const CHANNEL_PROVIDER_LABELS: Record<string, string> = {
+  buzz: "Buzz",
   dingtalk: "DingTalk",
   discord: "Discord",
   feishu: "Feishu",

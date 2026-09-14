@@ -8,9 +8,12 @@ Pure data classes and decorators — no I/O, no side effects.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from langchain.agents.middleware import AgentMiddleware
+
+if TYPE_CHECKING:
+    from deerflow.config.memory_config import MemoryConfig
 
 
 # 运行时特性标志: 控制沙盒、记忆、摘要、子代理、视觉、自动标题、护栏、循环检测等功能的启用
@@ -29,6 +32,9 @@ class RuntimeFeatures:
 
     sandbox: bool | AgentMiddleware = True
     memory: bool | AgentMiddleware = False
+    # Explicit memory config for direct create_deerflow_agent(features=...) callers.
+    # The lead-agent AppConfig path passes resolved_app_config.memory directly.
+    memory_config: MemoryConfig | None = None
     summarization: Literal[False] | AgentMiddleware = False
     subagent: bool | AgentMiddleware = False
     vision: bool | AgentMiddleware = False

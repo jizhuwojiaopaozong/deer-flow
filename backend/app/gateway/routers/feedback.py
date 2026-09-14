@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_current_user, get_feedback_repo, get_run_store
+from deerflow.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/threads", tags=["feedback"])
@@ -65,7 +66,7 @@ class FeedbackStatsResponse(BaseModel):
 @router.put("/{thread_id}/runs/{run_id}/feedback", response_model=FeedbackResponse)
 @require_permission("threads", "write", owner_check=True, require_existing=True)
 async def upsert_feedback(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     body: FeedbackUpsertRequest,
     request: Request,
@@ -96,7 +97,7 @@ async def upsert_feedback(
 @router.delete("/{thread_id}/runs/{run_id}/feedback")
 @require_permission("threads", "delete", owner_check=True, require_existing=True)
 async def delete_run_feedback(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     request: Request,
 ) -> dict[str, bool]:
@@ -116,7 +117,7 @@ async def delete_run_feedback(
 @router.post("/{thread_id}/runs/{run_id}/feedback", response_model=FeedbackResponse)
 @require_permission("threads", "write", owner_check=True, require_existing=True)
 async def create_feedback(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     body: FeedbackCreateRequest,
     request: Request,
@@ -149,7 +150,7 @@ async def create_feedback(
 @router.get("/{thread_id}/runs/{run_id}/feedback", response_model=list[FeedbackResponse])
 @require_permission("threads", "read", owner_check=True)
 async def list_feedback(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     request: Request,
 ) -> list[dict[str, Any]]:
@@ -161,7 +162,7 @@ async def list_feedback(
 @router.get("/{thread_id}/runs/{run_id}/feedback/stats", response_model=FeedbackStatsResponse)
 @require_permission("threads", "read", owner_check=True)
 async def feedback_stats(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     request: Request,
 ) -> dict[str, Any]:
@@ -173,7 +174,7 @@ async def feedback_stats(
 @router.delete("/{thread_id}/runs/{run_id}/feedback/{feedback_id}")
 @require_permission("threads", "delete", owner_check=True, require_existing=True)
 async def delete_feedback(
-    thread_id: str,
+    thread_id: ThreadId,
     run_id: str,
     feedback_id: str,
     request: Request,

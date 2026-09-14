@@ -5,6 +5,17 @@ from enum import StrEnum
 
 
 # 中文说明：运行生命周期状态枚举（待处理/运行中/成功/错误/超时/中断）
+class ThreadOperationKind(StrEnum):
+    """Kind of operation holding exclusive admission for a thread."""
+
+    run = "run"
+    checkpoint_write = "checkpoint_write"
+    artifact_write = "artifact_write"
+    artifact_archive = "artifact_archive"
+    branch = "branch"
+    delete = "delete"
+
+
 class RunStatus(StrEnum):
     """Lifecycle status of a single run."""
 

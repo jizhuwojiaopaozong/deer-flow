@@ -40,7 +40,12 @@ export function getUsageMetadata(message: Message): TokenUsage | null {
 }
 
 /**
- * Accumulate token usage across all AI messages in a thread.
+ * Accumulate token usage across AI messages.
+ *
+ * UI rendering may place the same AI message in more than one group, such as
+ * when a message contains both reasoning and final answer content. Token usage
+ * is attached to the AI message itself, so a message id should only contribute
+ * once to any aggregate.
  */
 export function accumulateUsage(messages: Message[]): TokenUsage | null {
   const cumulative: TokenUsage = {
@@ -49,16 +54,61 @@ export function accumulateUsage(messages: Message[]): TokenUsage | null {
     totalTokens: 0,
   };
   let hasUsage = false;
+  const countedMessageIds = new Set<string>();
+
   for (const message of messages) {
     const usage = getUsageMetadata(message);
-    if (usage) {
-      hasUsage = true;
-      cumulative.inputTokens += usage.inputTokens;
-      cumulative.outputTokens += usage.outputTokens;
-      cumulative.totalTokens += usage.totalTokens;
+    if (!usage) {
+      continue;
     }
+
+    if (message.id) {
+      if (countedMessageIds.has(message.id)) {
+        continue;
+      }
+      countedMessageIds.add(message.id);
+    }
+
+    hasUsage = true;
+    cumulative.inputTokens += usage.inputTokens;
+    cumulative.outputTokens += usage.outputTokens;
+    cumulative.totalTokens += usage.totalTokens;
   }
   return hasUsage ? cumulative : null;
+}
+
+/**
+ * Validate a raw `{input,output,total}_tokens` object into {@link TokenUsage}.
+ *
+ * The single shared validator for both sub-agent usage surfaces — the live
+ * `task_running` event (`core/tasks/lifecycle.ts`) and the terminal ToolMessage
+ * metadata (`core/tasks/subtask-result.ts`). Keeping one function stops the two
+ * from drifting (e.g. one accepting an extra token field the other rejects).
+ * Every key must be a finite, non-negative number or the whole snapshot is
+ * rejected as `undefined`.
+ */
+export function normalizeTokenUsage(value: unknown): TokenUsage | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const inputTokens = nonNegativeNumber(record.input_tokens);
+  const outputTokens = nonNegativeNumber(record.output_tokens);
+  const totalTokens = nonNegativeNumber(record.total_tokens);
+  if (
+    inputTokens === undefined ||
+    outputTokens === undefined ||
+    totalTokens === undefined
+  ) {
+    return undefined;
+  }
+  return { inputTokens, outputTokens, totalTokens };
+}
+
+function nonNegativeNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : undefined;
 }
 
 export function hasNonZeroUsage(

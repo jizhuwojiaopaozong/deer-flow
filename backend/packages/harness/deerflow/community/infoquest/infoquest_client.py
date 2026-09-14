@@ -14,6 +14,10 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+# Requests has no default timeout. This bounds local connect/read inactivity;
+# fetch_timeout and fetch_navigation_timeout configure the remote crawl only.
+_REQUEST_TIMEOUT_SECONDS = 30
+
 
 # 中文说明：InfoQuest API 客户端，支持网页搜索、图片搜索和网页抓取
 class InfoQuestClient:
@@ -66,7 +70,7 @@ class InfoQuestClient:
 
         logger.debug("Sending crawl request to InfoQuest API")
         try:
-            response = requests.post("https://reader.infoquest.bytepluses.com", headers=headers, json=data)
+            response = requests.post("https://reader.infoquest.bytepluses.com", headers=headers, json=data, timeout=_REQUEST_TIMEOUT_SECONDS)
 
             # Check if status code is not 200
             if response.status_code != 200:
@@ -167,7 +171,7 @@ class InfoQuestClient:
         if site != "":
             params["site"] = site
 
-        response = requests.post("https://search.infoquest.bytepluses.com", headers=headers, json=params)
+        response = requests.post("https://search.infoquest.bytepluses.com", headers=headers, json=params, timeout=_REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
 
         # Print partial response for debugging
@@ -343,7 +347,7 @@ class InfoQuestClient:
         elif self.image_size:
             logger.warning(f"image_size {self.image_size} is not valid, must be 'l', 'm', or 'i'")
 
-        response = requests.post("https://search.infoquest.bytepluses.com", headers=headers, json=params)
+        response = requests.post("https://search.infoquest.bytepluses.com", headers=headers, json=params, timeout=_REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
 
         # Print partial response for debugging

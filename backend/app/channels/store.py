@@ -84,8 +84,9 @@ class ChannelStore:
     # 中文说明：根据渠道名和聊天ID查找对应的 DeerFlow 线程ID
     def get_thread_id(self, channel_name: str, chat_id: str, topic_id: str | None = None) -> str | None:
         """Look up the DeerFlow thread_id for a given IM conversation/topic."""
-        entry = self._data.get(self._key(channel_name, chat_id, topic_id))
-        return entry["thread_id"] if entry else None
+        with self._lock:
+            entry = self._data.get(self._key(channel_name, chat_id, topic_id))
+            return entry["thread_id"] if entry else None
 
     # 中文说明：创建或更新 IM 会话到 DeerFlow 线程的映射
     def set_thread_id(
@@ -144,8 +145,11 @@ class ChannelStore:
     # 中文说明：列出所有存储的映射，可按渠道名过滤
     def list_entries(self, channel_name: str | None = None) -> list[dict[str, Any]]:
         """List all stored mappings, optionally filtered by channel."""
+        with self._lock:
+            entries = [(key, entry.copy()) for key, entry in self._data.items()]
+
         results = []
-        for key, entry in self._data.items():
+        for key, entry in entries:
             parts = key.split(":", 2)
             ch = parts[0]
             chat = parts[1] if len(parts) > 1 else ""

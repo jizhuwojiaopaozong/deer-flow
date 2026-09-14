@@ -23,6 +23,7 @@ class AuthErrorCode(StrEnum):
     PROVIDER_NOT_FOUND = "provider_not_found"
     NOT_AUTHENTICATED = "not_authenticated"
     SYSTEM_ALREADY_INITIALIZED = "system_already_initialized"
+    REGISTRATION_DISABLED = "registration_disabled"
 
 
 # 中文说明：JWT 解码失败原因枚举
